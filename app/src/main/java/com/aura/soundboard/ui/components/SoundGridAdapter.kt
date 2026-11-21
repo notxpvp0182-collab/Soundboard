@@ -14,6 +14,11 @@ import com.aura.soundboard.models.SoundItem
 import com.aura.soundboard.utils.UiAnimator
 import kotlin.math.roundToInt
 
+/**
+ * Main App Serial Soundboard List Adapter.
+ * Per user specification: Sounds are managed/configured here in the main app,
+ * while actual audio playback is triggered exclusively from the Floating Overlay.
+ */
 class SoundGridAdapter(
     private val onPlayToggle: (SoundItem, View) -> Unit,
     private val onFavoriteToggle: (SoundItem) -> Unit,
@@ -25,21 +30,21 @@ class SoundGridAdapter(
     var reducedMotion: Boolean = false
 
     private val badgeFillColors = intArrayOf(
-        Color.parseColor("#18FFFFFF"),
+        Color.parseColor("#16FFFFFF"),
         Color.parseColor("#1610B981"),
         Color.parseColor("#16A855F7"),
         Color.parseColor("#16F59E0B"),
         Color.parseColor("#1638BDF8")
     )
     private val badgeStrokeColors = intArrayOf(
-        Color.parseColor("#36FFFFFF"),
+        Color.parseColor("#30FFFFFF"),
         Color.parseColor("#4010B981"),
         Color.parseColor("#40A855F7"),
         Color.parseColor("#40F59E0B"),
         Color.parseColor("#4038BDF8")
     )
     private val badgeTextColors = intArrayOf(
-        Color.parseColor("#FFFFFF"),
+        Color.parseColor("#E4E4E7"),
         Color.parseColor("#34D399"),
         Color.parseColor("#C084FC"),
         Color.parseColor("#FBBF24"),
@@ -70,7 +75,7 @@ class SoundGridAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: SoundItem, position: Int) {
-            val isPlaying = activeSoundIds.contains(item.id)
+            val isPlayingInOverlay = activeSoundIds.contains(item.id)
             val paletteIdx = (position % badgeFillColors.size).coerceAtLeast(0)
 
             val serialPrefix = String.format("#%02d  ", position + 1)
@@ -88,10 +93,10 @@ class SoundGridAdapter(
             binding.badgeContainer.background = badgeBg
 
             binding.cardRoot.setBackgroundResource(
-                if (isPlaying) R.drawable.bg_glass_card_active else R.drawable.bg_glass_card
+                if (isPlayingInOverlay) R.drawable.bg_glass_card_active else R.drawable.bg_glass_card
             )
             binding.viewActiveIndicator.setBackgroundResource(
-                if (isPlaying) R.drawable.ic_stop else R.drawable.ic_sound_wave
+                if (isPlayingInOverlay) R.drawable.ic_stop else R.drawable.ic_sound_wave
             )
 
             binding.btnFavorite.alpha = if (item.isFavorite) 1.0f else 0.25f
@@ -100,25 +105,19 @@ class SoundGridAdapter(
                 onFavoriteToggle(item)
             }
 
-            binding.btnMoreOptions.setOnClickListener { view ->
-                UiAnimator.bounceTap(view, reducedMotion)
-                onEditClicked(item)
-            }
+            binding.btnMoreOptions.visibility = View.GONE
 
             val pct = (item.volume * 100).roundToInt().coerceIn(0, 100)
-            binding.tvItemVolume.text = "VOL $pct%"
+            binding.tvItemVolume.text = if (isPlayingInOverlay) "● LIVE IN OVERLAY" else "GAIN $pct%"
 
-            binding.btnPlayToggle.text = if (isPlaying) "■ STOP" else "▶ PLAY"
-            binding.btnPlayToggle.setTextColor(
-                if (isPlaying) Color.BLACK else Color.WHITE
-            )
-            binding.btnPlayToggle.setBackgroundResource(
-                if (isPlaying) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
-            )
+            // Main app button opens Configuration or launches Overlay (no direct main-app playback)
+            binding.btnPlayToggle.text = "⚙ CONFIG"
+            binding.btnPlayToggle.setTextColor(Color.WHITE)
+            binding.btnPlayToggle.setBackgroundResource(R.drawable.bg_3d_button)
 
             binding.btnPlayToggle.setOnClickListener { view ->
                 UiAnimator.bounceTap(view, reducedMotion)
-                onPlayToggle(item, view)
+                onEditClicked(item)
             }
             binding.cardRoot.setOnClickListener { view ->
                 UiAnimator.bounceTap(view, reducedMotion)

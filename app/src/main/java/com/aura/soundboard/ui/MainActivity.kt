@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
         soundGridAdapter = SoundGridAdapter(
             onPlayToggle = { item, view ->
                 HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
-                viewModel.togglePlay(item)
+                if (!container.overlayController.isShowing.value) { handleOverlayToggleRequest() }; Toast.makeText(this, "USE FLOATING OVERLAY TO PLAY SOUNDS", Toast.LENGTH_SHORT).show()
             },
             onFavoriteToggle = { item ->
                 viewModel.toggleFavorite(item)
@@ -413,7 +413,7 @@ class MainActivity : AppCompatActivity() {
             btn.setBackgroundResource(
                 if (selected) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
             )
-            btn.setTextColor(if (selected) Color.BLACK else Color.WHITE)
+            btn.setTextColor(if (selected) Color.WHITE else Color.WHITE)
         }
     }
 
@@ -462,7 +462,7 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.isOverlayShowing.collectLatest { showing ->
                         binding.btnToggleOverlay.text = if (showing) "● OVERLAY" else "OVERLAY"
-                        binding.btnToggleOverlay.setTextColor(if (showing) Color.BLACK else Color.WHITE)
+                        binding.btnToggleOverlay.setTextColor(if (showing) Color.WHITE else Color.WHITE)
                         binding.btnToggleOverlay.setBackgroundResource(
                             if (showing) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
                         )
@@ -502,7 +502,7 @@ class MainActivity : AppCompatActivity() {
 
         for ((btn, filter) in pairs) {
             val active = activeFilter == filter
-            btn.setTextColor(if (active) Color.BLACK else secondary)
+            btn.setTextColor(if (active) Color.WHITE else secondary)
             btn.setBackgroundResource(
                 if (active) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
             )

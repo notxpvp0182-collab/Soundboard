@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- MODE 1: ROUND FLOATING BUBBLE ICON (Tap to Open Panel, Drag to Move) -->
+    <!-- MODE 1: ROUND FLOATING BUBBLE ICON -->
     <FrameLayout
         android:id="@+id/overlayBubbleContainer"
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:src="@drawable/ic_nexu_logo" />
     </FrameLayout>
 
-    <!-- MODE 2: EXPANDED FLOATING SOUNDBOARD PANEL (Minimize returns to Round Bubble) -->
+    <!-- MODE 2: EXPANDED PURE DARK FAUX-3D SOUNDBOARD PANEL -->
     <LinearLayout
         android:id="@+id/overlayBody"
         android:layout_width="match_parent"
@@ -32,7 +32,6 @@
         android:padding="10dp"
         android:visibility="gone">
 
-        <!-- Drag Handle Header -->
         <LinearLayout
             android:id="@+id/overlayHeader"
             android:layout_width="match_parent"
@@ -41,8 +40,8 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_nexu_logo" />
 
@@ -50,12 +49,13 @@
                 android:id="@+id/tvOverlayTitle"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:ellipsize="end"
-                android:letterSpacing="0.1"
+                android:letterSpacing="0.12"
                 android:maxLines="1"
-                android:text="AURA BOARD"
+                android:singleLine="true"
+                android:text="AURA"
                 android:textAllCaps="true"
                 android:textColor="@color/text_primary"
                 android:textSize="11sp"
@@ -64,31 +64,36 @@
             <ImageButton
                 android:id="@+id/btnOverlayStopAll"
                 android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_height="30dp"
+                android:background="@drawable/bg_3d_button"
                 android:contentDescription="Stop All"
+                android:padding="6dp"
                 android:src="@drawable/ic_stop" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnOverlayMinimize"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="38dp"
-                android:layout_height="32dp"
+                android:layout_width="34dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="5dp"
+                android:background="@drawable/bg_3d_button"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:text="—"
-                android:textColor="@color/accent_cyan"
-                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnOverlayClose"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="38dp"
-                android:layout_height="32dp"
+                android:layout_width="34dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="5dp"
+                android:background="@drawable/bg_3d_button"
+                android:minWidth="0dp"
                 android:padding="0dp"
                 android:text="✕"
                 android:textColor="@color/accent_danger"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -96,6 +101,7 @@
             android:id="@+id/overlayVolumeRow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingVertical="2dp">
@@ -107,7 +113,8 @@
                 android:text="GAIN"
                 android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
-                android:textSize="9sp" />
+                android:textSize="9sp"
+                android:textStyle="bold" />
 
             <SeekBar
                 android:id="@+id/seekOverlayMasterVol"
@@ -115,13 +122,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:max="100"
-                android:progress="90" />
+                android:progress="100"
+                android:progressTint="#10B981"
+                android:thumbTint="#FFFFFF" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvOverlaySounds"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:layout_marginTop="4dp"
             android:layout_weight="1" />
 
         <TextView
@@ -149,15 +159,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:letterSpacing="0.1"
-                android:text="TAP — TO BUBBLE • DRAG CORNER"
+                android:singleLine="true"
+                android:text="TAP TO PLAY • DRAG CORNER"
                 android:textAllCaps="true"
                 android:textColor="@color/text_muted"
                 android:textSize="8sp" />
 
             <ImageView
                 android:id="@+id/btnOverlayResizeHandle"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:contentDescription="Resize"
                 android:padding="2dp"
                 android:src="@drawable/ic_resize" />

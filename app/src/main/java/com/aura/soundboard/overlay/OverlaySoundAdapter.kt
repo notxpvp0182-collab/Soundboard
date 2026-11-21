@@ -50,14 +50,14 @@ class OverlaySoundAdapter(
 
         fun bind(item: SoundItem, position: Int) {
             val isPlaying = activeIds.contains(item.id)
-            val prefix = String.format("#%02d ", position + 1)
+            val prefix = String.format("#%02d  ", position + 1)
             binding.tvOverlaySoundName.text = if (showLabels) {
                 prefix + item.name.uppercase()
             } else {
                 prefix + item.name.take(4).uppercase()
             }
             binding.tvOverlaySoundName.setTextColor(
-                if (isPlaying) Color.BLACK else Color.WHITE
+                if (isPlaying) Color.parseColor("#10B981") else Color.WHITE
             )
             binding.btnOverlaySoundRoot.setBackgroundResource(
                 if (isPlaying) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button

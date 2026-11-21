@@ -3,7 +3,7 @@ package com.aura.soundboard.audio
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.SoundPool
+import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import com.aura.soundboard.models.SoundItem
@@ -11,8 +11,6 @@ import com.aura.soundboard.repository.SettingsRepository
 import com.aura.soundboard.repository.SoundRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,10 +18,12 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Mic-Override & Low-Latency Audio Engine:
- * - Never routes to USAGE_VOICE_COMMUNICATION earpiece (which Android's hardware AEC subtracts from the mic!).
- * - Routes via USAGE_MEDIA + Exclusive Transient Focus + Speaker Proximity Override + Hardware LoudnessEnhancer DSP boost
- *   so soundboard playback dominates the microphone pickup cleanly over user speech during calls/voice chats.
+ * Discord & Voice-Chat Compatible Audio Engine:
+ * 1. NEVER steals AudioFocus (keeps Discord's microphone open without the '!' mute icon).
+ * 2. Uses USAGE_ALARM / CONTENT_TYPE_SONIFICATION in Voice Boost mode so Android's MODE_IN_COMMUNICATION
+ *     neither ducks the stream nor feeds it into the primary media AEC echo-subtraction reference.
+ * 3. Applies Vocal Formant Equalizer Boost (300Hz - 3400Hz) + LoudnessEnhancer (+900mB) so Discord's
+ *    Voice Activity Detector (VAD) triggers the green speaking ring reliably.
  */
 class HybridAudioEngine(
     private val context: Context,
@@ -40,39 +40,10 @@ class HybridAudioEngine(
         stopAll()
     }
 
-    private var soundPool: SoundPool? = null
-    private val loadedPoolSamples = LinkedHashMap<Long, Int>(16, 0.75f, true)
-    private val pendingPoolPlays = ConcurrentHashMap<Int, SoundItem>()
-    private val activePoolStreams = ConcurrentHashMap<Long, Int>()
-    private val poolCompletionJobs = ConcurrentHashMap<Long, Job>()
-
     private val activeMediaPlayers = ConcurrentHashMap<Long, MediaPlayer>()
     private val activeEnhancers = ConcurrentHashMap<Long, LoudnessEnhancer>()
+    private val activeEqualizers = ConcurrentHashMap<Long, Equalizer>()
     private val activeItemVolumes = ConcurrentHashMap<Long, Float>()
-
-    init {
-        initSoundPool()
-    }
-
-    private fun initSoundPool() {
-        val attrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            .build()
-
-        soundPool = SoundPool.Builder()
-            .setMaxStreams(MAX_CONCURRENT_STREAMS)
-            .setAudioAttributes(attrs)
-            .build()
-            .apply {
-                setOnLoadCompleteListener { _, sampleId, status ->
-                    val pendingItem = pendingPoolPlays.remove(sampleId)
-                    if (status == 0 && pendingItem != null) {
-                        triggerLoadedPoolSample(pendingItem, sampleId)
-                    }
-                }
-            }
-    }
 
     override fun togglePlay(item: SoundItem) {
         if (_activeSoundIds.value.contains(item.id)) {
@@ -90,89 +61,37 @@ class HybridAudioEngine(
             stopSound(item.id)
         }
 
-        focusController.requestTransientFocus(settings.voiceCommRouting)
+        // Prepare speakerphone & stream boost WITHOUT stealing Discord's audio focus
+        focusController.prepareVoiceCallTransmission(settings.voiceCommRouting)
         activeItemVolumes[item.id] = item.volume.coerceIn(0f, 1f)
         scope.launch { soundRepository.markPlayed(item.id) }
 
-        // In Mic-Override Boost mode, use MediaPlayer with hardware LoudnessEnhancer DSP boost
-        if (!settings.voiceCommRouting && item.isShortClip) {
-            playViaSoundPool(item)
-        } else {
-            playViaStreamingMediaPlayer(item)
-        }
+        playViaVoiceBoostedPlayer(item)
     }
 
-    private fun playViaSoundPool(item: SoundItem) {
-        val pool = soundPool ?: run {
-            initSoundPool()
-            soundPool
-        } ?: return
-
-        val existingSampleId = synchronized(loadedPoolSamples) { loadedPoolSamples[item.id] }
-        if (existingSampleId != null) {
-            triggerLoadedPoolSample(item, existingSampleId)
-            return
-        }
-
-        scope.launch(Dispatchers.IO) {
-            try {
-                val uri = Uri.parse(item.uriString)
-                val pfd = context.contentResolver.openFileDescriptor(uri, "r")
-                if (pfd == null) {
-                    playViaStreamingMediaPlayer(item)
-                    return@launch
-                }
-                pfd.use { descriptor ->
-                    val sampleId = pool.load(descriptor.fileDescriptor, 0L, descriptor.statSize, 1)
-                    if (sampleId > 0) {
-                        synchronized(loadedPoolSamples) {
-                            if (loadedPoolSamples.size >= MAX_CACHED_POOL_SAMPLES) {
-                                val eldest = loadedPoolSamples.entries.iterator().next()
-                                pool.unload(eldest.value)
-                                loadedPoolSamples.remove(eldest.key)
-                            }
-                            loadedPoolSamples[item.id] = sampleId
-                        }
-                        pendingPoolPlays[sampleId] = item
-                    } else {
-                        playViaStreamingMediaPlayer(item)
-                    }
-                }
-            } catch (_: Exception) {
-                playViaStreamingMediaPlayer(item)
-            }
-        }
-    }
-
-    private fun triggerLoadedPoolSample(item: SoundItem, sampleId: Int) {
-        val pool = soundPool ?: return
-        val effectiveVol = (item.volume * settingsRepository.current.masterVolume).coerceIn(0f, 1f)
-        val streamId = pool.play(sampleId, effectiveVol, effectiveVol, 1, 0, 1.0f)
-        if (streamId != 0) {
-            activePoolStreams[item.id] = streamId
-            markSoundActive(item.id, true)
-            poolCompletionJobs[item.id]?.cancel()
-            val duration = item.durationMs.coerceIn(250L, 6000L)
-            poolCompletionJobs[item.id] = scope.launch {
-                delay(duration)
-                activePoolStreams.remove(item.id)
-                poolCompletionJobs.remove(item.id)
-                markSoundActive(item.id, false)
-            }
-        }
-    }
-
-    private fun playViaStreamingMediaPlayer(item: SoundItem) {
+    private fun playViaVoiceBoostedPlayer(item: SoundItem) {
         scope.launch(Dispatchers.IO) {
             try {
                 val settings = settingsRepository.current
                 val uri = Uri.parse(item.uriString)
                 val mp = MediaPlayer()
-                // Use USAGE_MEDIA so Android's Call Echo Canceller (AEC) does NOT subtract the sound from the microphone!
+
+                // USAGE_ALARM prevents Android from ducking volume during Discord MODE_IN_COMMUNICATION calls
+                val usage = if (settings.voiceCommRouting) {
+                    AudioAttributes.USAGE_ALARM
+                } else {
+                    AudioAttributes.USAGE_MEDIA
+                }
+                val contentType = if (settings.voiceCommRouting) {
+                    AudioAttributes.CONTENT_TYPE_SONIFICATION
+                } else {
+                    AudioAttributes.CONTENT_TYPE_MUSIC
+                }
+
                 mp.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(usage)
+                        .setContentType(contentType)
                         .build()
                 )
                 mp.setDataSource(context, uri)
@@ -187,11 +106,28 @@ class HybridAudioEngine(
                 }
                 mp.prepare()
 
-                // Attach Hardware DSP LoudnessEnhancer in Mic Override mode to dominate mic pickup
                 if (settings.voiceCommRouting) {
+                    // 1. Boost human vocal frequencies (300Hz - 3400Hz) so Discord VAD lights up green ring
+                    try {
+                        val eq = Equalizer(0, mp.audioSessionId)
+                        val bands = eq.numberOfBands
+                        val maxLevel = eq.bandLevelRange[1]
+                        for (b in 0 until bands) {
+                            val bandIndex = b.toShort()
+                            val centerFreqMilliHz = eq.getCenterFreq(bandIndex)
+                            if (centerFreqMilliHz in 250_000..3_800_000) {
+                                eq.setBandLevel(bandIndex, maxLevel)
+                            }
+                        }
+                        eq.enabled = true
+                        activeEqualizers[item.id] = eq
+                    } catch (_: Exception) {
+                    }
+
+                    // 2. Apply Hardware DSP LoudnessEnhancer (+900mB)
                     try {
                         val enhancer = LoudnessEnhancer(mp.audioSessionId)
-                        val boostMb = (650 * effectiveVol).toInt().coerceIn(0, 700)
+                        val boostMb = (900 * effectiveVol).toInt().coerceIn(0, 1000)
                         enhancer.setTargetGain(boostMb)
                         enhancer.enabled = true
                         activeEnhancers[item.id] = enhancer
@@ -212,10 +148,6 @@ class HybridAudioEngine(
     }
 
     override fun stopSound(soundId: Long) {
-        poolCompletionJobs.remove(soundId)?.cancel()
-        activePoolStreams.remove(soundId)?.let { streamId ->
-            soundPool?.stop(streamId)
-        }
         activeMediaPlayers.remove(soundId)?.let { player ->
             cleanupMediaPlayer(soundId, player)
         }
@@ -223,34 +155,17 @@ class HybridAudioEngine(
     }
 
     override fun stopAll() {
-        poolCompletionJobs.values.forEach { it.cancel() }
-        poolCompletionJobs.clear()
-
-        activePoolStreams.values.forEach { streamId ->
-            try {
-                soundPool?.stop(streamId)
-            } catch (_: Exception) {
-            }
-        }
-        activePoolStreams.clear()
-
         val players = activeMediaPlayers.entries.toList()
         activeMediaPlayers.clear()
         players.forEach { (id, player) ->
             cleanupMediaPlayer(id, player)
         }
-
         _activeSoundIds.value = emptySet()
-        focusController.abandonFocus()
+        focusController.restoreAudioState()
     }
 
     override fun setMasterVolume(volume: Float) {
         val master = volume.coerceIn(0f, 1f)
-        activePoolStreams.forEach { (soundId, streamId) ->
-            val itemVol = activeItemVolumes[soundId] ?: 1f
-            val eff = (itemVol * master).coerceIn(0f, 1f)
-            soundPool?.setVolume(streamId, eff, eff)
-        }
         activeMediaPlayers.forEach { (soundId, player) ->
             try {
                 val itemVol = activeItemVolumes[soundId] ?: 1f
@@ -267,9 +182,6 @@ class HybridAudioEngine(
         val master = settingsRepository.current.masterVolume
         val eff = (itemVol * master).coerceIn(0f, 1f)
 
-        activePoolStreams[soundId]?.let { streamId ->
-            soundPool?.setVolume(streamId, eff, eff)
-        }
         activeMediaPlayers[soundId]?.let { player ->
             try {
                 player.setVolume(eff, eff)
@@ -278,34 +190,20 @@ class HybridAudioEngine(
         }
     }
 
-    override fun onTrimMemory() {
-        synchronized(loadedPoolSamples) {
-            val pool = soundPool ?: return
-            val iterator = loadedPoolSamples.entries.iterator()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                if (!_activeSoundIds.value.contains(entry.key)) {
-                    pool.unload(entry.value)
-                    iterator.remove()
-                }
-            }
-        }
-    }
+    override fun onTrimMemory() {}
 
     override fun release() {
         stopAll()
-        synchronized(loadedPoolSamples) {
-            loadedPoolSamples.clear()
-        }
-        try {
-            soundPool?.release()
-        } catch (_: Exception) {
-        }
-        soundPool = null
     }
 
     private fun cleanupMediaPlayer(soundId: Long, player: MediaPlayer) {
         activeMediaPlayers.remove(soundId)
+        activeEqualizers.remove(soundId)?.let { eq ->
+            try {
+                eq.release()
+            } catch (_: Exception) {
+            }
+        }
         activeEnhancers.remove(soundId)?.let { enhancer ->
             try {
                 enhancer.release()
@@ -328,12 +226,7 @@ class HybridAudioEngine(
         if (active) current.add(soundId) else current.remove(soundId)
         _activeSoundIds.value = current
         if (current.isEmpty()) {
-            focusController.abandonFocus()
+            focusController.restoreAudioState()
         }
-    }
-
-    companion object {
-        private const val MAX_CONCURRENT_STREAMS = 6
-        private const val MAX_CACHED_POOL_SAMPLES = 16
     }
 }

@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:top="2dp">
+    <!-- Dark emerald/graphite depth shadow -->
+    <item android:top="1.5dp">
         <shape android:shape="rectangle">
-            <solid android:color="#52525B" />
+            <solid android:color="#06281E" />
             <corners android:radius="10dp" />
         </shape>
     </item>
-    <item android:bottom="2dp">
+    <!-- Pure Dark Active Faux-3D Surface (Never white or blue) -->
+    <item android:bottom="1.5dp">
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
-                android:endColor="#E4E4E7"
-                android:startColor="#FFFFFF" />
+                android:endColor="#121820"
+                android:startColor="#1F2937" />
             <corners android:radius="10dp" />
             <stroke
-                android:width="1dp"
-                android:color="#FFFFFFFF" />
+                android:width="1.2dp"
+                android:color="#8810B981" />
         </shape>
     </item>
 </layer-list>
