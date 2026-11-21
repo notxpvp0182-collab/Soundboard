@@ -3,101 +3,121 @@
     android:id="@+id/cardRoot"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
+    android:layout_marginVertical="4dp"
     android:background="@drawable/bg_glass_card"
-    android:orientation="vertical"
-    android:padding="11dp">
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+    <!-- Left Colored Squircle Badge (Screenshot 5 Serial Row Icon Box) -->
+    <FrameLayout
+        android:id="@+id/badgeContainer"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_badge_squircle">
 
         <View
             android:id="@+id/viewActiveIndicator"
-            android:layout_width="8dp"
-            android:layout_height="8dp"
-            android:background="@drawable/ic_play" />
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ic_sound_wave" />
+    </FrameLayout>
+
+    <!-- Middle Serial Info: Title + Small-Caps Category Badge + Volume Pill -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvSoundCategory"
-            android:layout_width="0dp"
+            android:id="@+id/tvSoundName"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.04"
             android:maxLines="1"
-            android:text="SFX"
-            android:textColor="@color/accent_cyan"
-            android:textSize="10sp"
+            android:text="SOUND TITLE"
+            android:textAllCaps="true"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
-        <ImageButton
-            android:id="@+id/btnFavorite"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Favorite"
-            android:src="@drawable/ic_favorite" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnMoreOptions"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Edit Sound"
-            android:src="@drawable/ic_more" />
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvSoundCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_squircle"
+                android:letterSpacing="0.12"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="SFX"
+                android:textAllCaps="true"
+                android:textColor="@color/accent_cyan"
+                android:textSize="9sp"
+                android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/tvSoundName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:maxLines="2"
-        android:minLines="2"
-        android:text="Sound Title"
-        android:textColor="@color/text_primary"
-        android:textSize="14sp"
-        android:textStyle="bold" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvItemVolume"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:letterSpacing="0.08"
+                android:text="100%"
+                android:textColor="@color/text_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <SeekBar
             android:id="@+id/seekItemVolume"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:max="100"
-            android:progress="100" />
-
-        <TextView
-            android:id="@+id/tvItemVolume"
-            android:layout_width="32dp"
-            android:layout_height="wrap_content"
-            android:gravity="end"
-            android:text="100%"
-            android:textColor="@color/text_secondary"
-            android:textSize="10sp" />
+            android:progress="100"
+            android:visibility="gone" />
     </LinearLayout>
 
+    <ImageButton
+        android:id="@+id/btnFavorite"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Favorite"
+        android:padding="5dp"
+        android:src="@drawable/ic_favorite" />
+
+    <ImageButton
+        android:id="@+id/btnMoreOptions"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Configure"
+        android:padding="5dp"
+        android:src="@drawable/ic_settings" />
+
+    <!-- Right Tactile 3D Play / Stop Button -->
     <Button
         android:id="@+id/btnPlayToggle"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
-        android:backgroundTint="@color/glass_panel_elevated"
-        android:text="▶ Play"
-        android:textAllCaps="false"
-        android:textColor="@color/accent_cyan"
-        android:textSize="12sp"
+        android:layout_width="76dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_3d_button"
+        android:letterSpacing="0.08"
+        android:text="▶ PLAY"
+        android:textAllCaps="true"
+        android:textColor="@color/text_primary"
+        android:textSize="10sp"
         android:textStyle="bold" />
 </LinearLayout>

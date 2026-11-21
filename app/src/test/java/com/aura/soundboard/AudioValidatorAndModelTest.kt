@@ -69,6 +69,6 @@ class AudioValidatorAndModelTest {
         val defaults = AppSettings()
         assertEquals(0.90f, defaults.masterVolume, 0.001f)
         assertTrue(defaults.allowOverlap)
-        assertFalse(defaults.overlayMinimized)
+        assertTrue(defaults.overlayMinimized)
     }
 }

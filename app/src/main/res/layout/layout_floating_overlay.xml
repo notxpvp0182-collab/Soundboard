@@ -1,75 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/overlayRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg_glass_overlay"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:layout_height="match_parent">
 
-    <!-- Drag Handle Header -->
-    <LinearLayout
-        android:id="@+id/overlayHeader"
+    <!-- MODE 1: ROUND FLOATING BUBBLE ICON (Tap to Open Panel, Drag to Move) -->
+    <FrameLayout
+        android:id="@+id/overlayBubbleContainer"
         android:layout_width="match_parent"
-        android:layout_height="38dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_overlay_bubble"
+        android:padding="10dp"
+        android:visibility="visible">
 
         <ImageView
-            android:layout_width="18dp"
-            android:layout_height="18dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_sound_wave" />
+            android:id="@+id/ivBubbleIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:contentDescription="Open Floating Soundboard"
+            android:src="@drawable/ic_nexu_logo" />
+    </FrameLayout>
 
-        <TextView
-            android:id="@+id/tvOverlayTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="Aura Overlay (Drag)"
-            android:textColor="@color/text_primary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/btnOverlayStopAll"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Stop All Sounds"
-            android:src="@drawable/ic_stop" />
-
-        <Button
-            android:id="@+id/btnOverlayMinimize"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="42dp"
-            android:layout_height="34dp"
-            android:padding="0dp"
-            android:text="—"
-            android:textColor="@color/accent_cyan"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/btnOverlayClose"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="42dp"
-            android:layout_height="34dp"
-            android:padding="0dp"
-            android:text="✕"
-            android:textColor="@color/accent_danger"
-            android:textSize="13sp" />
-    </LinearLayout>
-
-    <!-- Collapsible Overlay Body -->
+    <!-- MODE 2: EXPANDED FLOATING SOUNDBOARD PANEL (Minimize returns to Round Bubble) -->
     <LinearLayout
         android:id="@+id/overlayBody"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_glass_overlay"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <!-- Drag Handle Header -->
+        <LinearLayout
+            android:id="@+id/overlayHeader"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_nexu_logo" />
+
+            <TextView
+                android:id="@+id/tvOverlayTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:letterSpacing="0.1"
+                android:maxLines="1"
+                android:text="AURA BOARD"
+                android:textAllCaps="true"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnOverlayStopAll"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Stop All"
+                android:src="@drawable/ic_stop" />
+
+            <Button
+                android:id="@+id/btnOverlayMinimize"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="38dp"
+                android:layout_height="32dp"
+                android:padding="0dp"
+                android:text="—"
+                android:textColor="@color/accent_cyan"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnOverlayClose"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="38dp"
+                android:layout_height="32dp"
+                android:padding="0dp"
+                android:text="✕"
+                android:textColor="@color/accent_danger"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/overlayVolumeRow"
@@ -82,9 +103,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Vol"
+                android:letterSpacing="0.1"
+                android:text="GAIN"
+                android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
+                android:textSize="9sp" />
 
             <SeekBar
                 android:id="@+id/seekOverlayMasterVol"
@@ -106,16 +129,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:letterSpacing="0.1"
             android:padding="12dp"
-            android:text="No sounds imported yet."
+            android:text="NO SOUNDS"
+            android:textAllCaps="true"
             android:textColor="@color/text_secondary"
-            android:textSize="11sp"
+            android:textSize="10sp"
             android:visibility="gone" />
 
-        <!-- Bottom Bar with Corner Resize Touch Handle -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="22dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
@@ -124,17 +148,19 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Tap to play • Drag corner to resize"
+                android:letterSpacing="0.1"
+                android:text="TAP — TO BUBBLE • DRAG CORNER"
+                android:textAllCaps="true"
                 android:textColor="@color/text_muted"
-                android:textSize="9sp" />
+                android:textSize="8sp" />
 
             <ImageView
                 android:id="@+id/btnOverlayResizeHandle"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:contentDescription="Resize Overlay"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="Resize"
                 android:padding="2dp"
                 android:src="@drawable/ic_resize" />
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

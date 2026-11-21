@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer soft glow ring -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#263B82F6" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#886366F1" />
+        </shape>
+    </item>
+    <!-- Inner 3D dark circle -->
+    <item
+        android:bottom="3dp"
+        android:left="3dp"
+        android:right="3dp"
+        android:top="3dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="270"
+                android:endColor="#0A0C12"
+                android:startColor="#1A1F2C" />
+            <stroke
+                android:width="1dp"
+                android:color="#38FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

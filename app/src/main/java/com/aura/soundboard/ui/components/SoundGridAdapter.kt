@@ -1,9 +1,10 @@
 package com.aura.soundboard.ui.components
 
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SeekBar
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -15,11 +16,34 @@ import kotlin.math.roundToInt
 class SoundGridAdapter(
     private val onPlayToggle: (SoundItem, View) -> Unit,
     private val onFavoriteToggle: (SoundItem) -> Unit,
-    private val onVolumeChanged: (SoundItem, Float) -> Unit,
+    @Suppress("UNUSED_PARAMETER") private val onVolumeChanged: (SoundItem, Float) -> Unit,
     private val onEditClicked: (SoundItem) -> Unit
 ) : ListAdapter<SoundItem, SoundGridAdapter.SoundViewHolder>(DiffCallback) {
 
     private var activeSoundIds: Set<Long> = emptySet()
+
+    // Soft NexuSec badge tint palette (Blue, Purple, Emerald, Amber, Indigo)
+    private val badgeFillColors = intArrayOf(
+        Color.parseColor("#183B82F6"),
+        Color.parseColor("#18A855F7"),
+        Color.parseColor("#1810B981"),
+        Color.parseColor("#18F59E0B"),
+        Color.parseColor("#186366F1")
+    )
+    private val badgeStrokeColors = intArrayOf(
+        Color.parseColor("#403B82F6"),
+        Color.parseColor("#40A855F7"),
+        Color.parseColor("#4010B981"),
+        Color.parseColor("#40F59E0B"),
+        Color.parseColor("#406366F1")
+    )
+    private val badgeTextColors = intArrayOf(
+        Color.parseColor("#60A5FA"),
+        Color.parseColor("#C084FC"),
+        Color.parseColor("#34D399"),
+        Color.parseColor("#FBBF24"),
+        Color.parseColor("#818CF8")
+    )
 
     fun updateActiveSoundIds(newIds: Set<Long>) {
         if (activeSoundIds == newIds) return
@@ -37,26 +61,39 @@ class SoundGridAdapter(
     }
 
     override fun onBindViewHolder(holder: SoundViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), position)
     }
 
     inner class SoundViewHolder(
         private val binding: ItemSoundCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: SoundItem) {
+        fun bind(item: SoundItem, position: Int) {
             val isPlaying = activeSoundIds.contains(item.id)
-            binding.tvSoundName.text = item.name
+            val paletteIdx = (position % badgeFillColors.size).coerceAtLeast(0)
+
+            val serialPrefix = String.format("#%02d  ", position + 1)
+            binding.tvSoundName.text = serialPrefix + item.name.uppercase()
             binding.tvSoundCategory.text = item.category.uppercase()
+            binding.tvSoundCategory.setTextColor(badgeTextColors[paletteIdx])
+
+            val density = binding.root.resources.displayMetrics.density
+            val badgeBg = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 10f * density
+                setColor(badgeFillColors[paletteIdx])
+                setStroke((1f * density).toInt().coerceAtLeast(1), badgeStrokeColors[paletteIdx])
+            }
+            binding.badgeContainer.background = badgeBg
 
             binding.cardRoot.setBackgroundResource(
                 if (isPlaying) R.drawable.bg_glass_card_active else R.drawable.bg_glass_card
             )
             binding.viewActiveIndicator.setBackgroundResource(
-                if (isPlaying) R.drawable.ic_stop else R.drawable.ic_play
+                if (isPlaying) R.drawable.ic_stop else R.drawable.ic_sound_wave
             )
 
-            binding.btnFavorite.alpha = if (item.isFavorite) 1.0f else 0.32f
+            binding.btnFavorite.alpha = if (item.isFavorite) 1.0f else 0.25f
             binding.btnFavorite.setOnClickListener {
                 onFavoriteToggle(item)
             }
@@ -66,27 +103,13 @@ class SoundGridAdapter(
             }
 
             val pct = (item.volume * 100).roundToInt().coerceIn(0, 100)
-            binding.seekItemVolume.setOnSeekBarChangeListener(null)
-            binding.seekItemVolume.progress = pct
-            binding.tvItemVolume.text = "$pct%"
+            binding.tvItemVolume.text = "VOL $pct%"
 
-            binding.seekItemVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    if (fromUser) {
-                        binding.tvItemVolume.text = "$progress%"
-                    }
-                }
+            binding.btnPlayToggle.text = if (isPlaying) "■ STOP" else "▶ PLAY"
+            binding.btnPlayToggle.setBackgroundResource(
+                if (isPlaying) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
+            )
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    val progress = seekBar?.progress ?: pct
-                    val newVol = (progress / 100f).coerceIn(0f, 1f)
-                    onVolumeChanged(item, newVol)
-                }
-            })
-
-            binding.btnPlayToggle.text = if (isPlaying) "■ Stop" else "▶ Play"
             binding.btnPlayToggle.setOnClickListener { view ->
                 onPlayToggle(item, view)
             }

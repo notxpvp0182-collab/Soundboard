@@ -15,19 +15,20 @@ class SettingsPreferences(context: Context) {
             hapticFeedback = prefs.getBoolean(KEY_HAPTIC, true),
             compactGrid = prefs.getBoolean(KEY_COMPACT_GRID, false),
             requestAudioFocus = prefs.getBoolean(KEY_AUDIO_FOCUS, true),
-            voiceCommRouting = prefs.getBoolean(KEY_VOICE_COMM, false),
+            voiceCommRouting = prefs.getBoolean(KEY_VOICE_COMM, true),
             allowOverlap = prefs.getBoolean(KEY_ALLOW_OVERLAP, true),
             stopOnExit = prefs.getBoolean(KEY_STOP_ON_EXIT, false),
             startOnBoot = prefs.getBoolean(KEY_START_ON_BOOT, false),
-            overlayOpacity = prefs.getFloat(KEY_OVERLAY_OPACITY, 0.92f).coerceIn(0.35f, 1.0f),
+            overlayOpacity = prefs.getFloat(KEY_OVERLAY_OPACITY, 0.94f).coerceIn(0.35f, 1.0f),
             overlayShowLabels = prefs.getBoolean(KEY_OVERLAY_LABELS, true),
             reducedMotion = prefs.getBoolean(KEY_REDUCED_MOTION, false),
-            overlayX = prefs.getInt(KEY_OVERLAY_X, 36),
-            overlayY = prefs.getInt(KEY_OVERLAY_Y, 150),
-            overlayWidthDp = prefs.getInt(KEY_OVERLAY_W, 270).coerceIn(180, 520),
-            overlayHeightDp = prefs.getInt(KEY_OVERLAY_H, 300).coerceIn(170, 680),
-            overlayMinimized = prefs.getBoolean(KEY_OVERLAY_MIN, false),
-            onboardingCompleted = prefs.getBoolean(KEY_ONBOARDING_DONE, false)
+            overlayX = prefs.getInt(KEY_OVERLAY_X, 24),
+            overlayY = prefs.getInt(KEY_OVERLAY_Y, 180),
+            overlayWidthDp = prefs.getInt(KEY_OVERLAY_W, 280).coerceIn(200, 520),
+            overlayHeightDp = prefs.getInt(KEY_OVERLAY_H, 320).coerceIn(190, 680),
+            overlayBubbleSizeDp = prefs.getInt(KEY_BUBBLE_SIZE, 58).coerceIn(42, 96),
+            overlayMinimized = prefs.getBoolean(KEY_OVERLAY_MIN, true),
+            onboardingCompleted = prefs.getBoolean(KEY_ONBOARDING_DONE, true)
         )
     }
 
@@ -48,6 +49,7 @@ class SettingsPreferences(context: Context) {
             .putInt(KEY_OVERLAY_Y, settings.overlayY)
             .putInt(KEY_OVERLAY_W, settings.overlayWidthDp)
             .putInt(KEY_OVERLAY_H, settings.overlayHeightDp)
+            .putInt(KEY_BUBBLE_SIZE, settings.overlayBubbleSizeDp.coerceIn(42, 96))
             .putBoolean(KEY_OVERLAY_MIN, settings.overlayMinimized)
             .putBoolean(KEY_ONBOARDING_DONE, settings.onboardingCompleted)
             .apply()
@@ -69,6 +71,7 @@ class SettingsPreferences(context: Context) {
         private const val KEY_OVERLAY_Y = "overlay_y"
         private const val KEY_OVERLAY_W = "overlay_w"
         private const val KEY_OVERLAY_H = "overlay_h"
+        private const val KEY_BUBBLE_SIZE = "bubble_size_dp"
         private const val KEY_OVERLAY_MIN = "overlay_min"
         private const val KEY_ONBOARDING_DONE = "onboarding_done"
     }

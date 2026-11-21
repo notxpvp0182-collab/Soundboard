@@ -29,6 +29,7 @@ import com.aura.soundboard.models.SoundItem
 import com.aura.soundboard.service.SoundboardForegroundService
 import com.aura.soundboard.ui.components.SoundGridAdapter
 import com.aura.soundboard.utils.HapticHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -41,6 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var soundGridAdapter: SoundGridAdapter
     private lateinit var gridLayoutManager: GridLayoutManager
+    private var isSettingsOpen = false
 
     private val importAudioLauncher = registerForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -52,16 +54,9 @@ class MainActivity : AppCompatActivity() {
 
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted ->
+    ) { _ ->
         refreshPermissionStatusLabels()
-        if (granted) {
-            attemptToggleMicMonitor()
-        } else {
-            showPermissionDeniedDialog(
-                title = "Microphone Permission Denied",
-                message = "Microphone access is only used when you enable local voice + soundboard monitoring. You can grant it anytime from Android Settings."
-            )
-        }
+        container.micMonitorMixer.refreshRouteState()
     }
 
     private val notifPermissionLauncher = registerForActivityResult(
@@ -76,22 +71,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        runLoadingScreenSequence()
         setupRecyclerView()
         setupTopAndMasterBars()
         setupSearchAndCategories()
-        setupBottomNavigation()
         setupSettingsControls()
         setupAboutScreen()
         observeState()
-
-        if (!container.settingsRepository.current.onboardingCompleted) {
-            showFirstLaunchOnboardingDialog()
-        }
     }
 
     override fun onResume() {
         super.onResume()
         refreshPermissionStatusLabels()
+        container.micMonitorMixer.refreshRouteState()
     }
 
     override fun onDestroy() {
@@ -100,12 +92,30 @@ class MainActivity : AppCompatActivity() {
             !container.overlayController.isShowing.value
         ) {
             container.audioEngine.stopAll()
-            container.micMonitorMixer.stopMonitoring()
+        }
+    }
+
+    private fun runLoadingScreenSequence() {
+        binding.loadingOverlayContainer.visibility = View.VISIBLE
+        binding.loadingProgressBar.progress = 25
+        lifecycleScope.launch {
+            delay(280)
+            binding.loadingProgressBar.progress = 70
+            delay(320)
+            binding.loadingProgressBar.progress = 100
+            delay(180)
+            binding.loadingOverlayContainer.animate()
+                .alpha(0f)
+                .setDuration(220)
+                .withEndAction {
+                    binding.loadingOverlayContainer.visibility = View.GONE
+                }
+                .start()
         }
     }
 
     private fun setupRecyclerView() {
-        val cols = if (container.settingsRepository.current.compactGrid) 3 else 2
+        val cols = if (container.settingsRepository.current.compactGrid) 2 else 1
         gridLayoutManager = GridLayoutManager(this, cols)
         soundGridAdapter = SoundGridAdapter(
             onPlayToggle = { item, view ->
@@ -125,17 +135,28 @@ class MainActivity : AppCompatActivity() {
 
         binding.rvSoundGrid.layoutManager = gridLayoutManager
         binding.rvSoundGrid.adapter = soundGridAdapter
-        binding.rvSoundGrid.itemAnimator = null // Keeps 1-2GB RAM UI latency minimal
+        binding.rvSoundGrid.itemAnimator = null
     }
 
     private fun setupTopAndMasterBars() {
-        binding.btnAudioRoutingGuide.setOnClickListener {
-            showAudioRoutingDiagnosticDialog()
+        binding.btnNavImport.setOnClickListener { view ->
+            HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
+            launchAudioImporter()
         }
 
         binding.btnToggleOverlay.setOnClickListener { view ->
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
             handleOverlayToggleRequest()
+        }
+
+        binding.btnAudioRoutingGuide.setOnClickListener {
+            showAudioRoutingDiagnosticDialog()
+        }
+
+        binding.btnCornerSettings.setOnClickListener { view ->
+            HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
+            isSettingsOpen = !isSettingsOpen
+            switchTab(if (isSettingsOpen) TAB_SETTINGS else TAB_BOARD)
         }
 
         binding.seekMasterVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -148,20 +169,6 @@ class MainActivity : AppCompatActivity() {
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
-
-        binding.btnMicMonitorToggle.setOnClickListener { view ->
-            HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
-            if (container.micMonitorMixer.isMonitoring.value) {
-                container.micMonitorMixer.stopMonitoring()
-                Toast.makeText(this, "Microphone monitor stopped.", Toast.LENGTH_SHORT).show()
-            } else {
-                if (!container.permissionManager.hasRecordAudioPermission()) {
-                    showMicrophoneExplanationBeforeRequest()
-                } else {
-                    attemptToggleMicMonitor()
-                }
-            }
-        }
 
         binding.btnStopAllMain.setOnClickListener { view ->
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
@@ -190,25 +197,14 @@ class MainActivity : AppCompatActivity() {
         binding.btnCatMusic.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_MUSIC) }
     }
 
-    private fun setupBottomNavigation() {
-        binding.btnNavSoundboard.setOnClickListener { switchTab(TAB_BOARD) }
-        binding.btnNavImport.setOnClickListener { launchAudioImporter() }
-        binding.btnNavSettings.setOnClickListener { switchTab(TAB_SETTINGS) }
-        binding.btnNavAbout.setOnClickListener { switchTab(TAB_ABOUT) }
-    }
-
     private fun switchTab(tabIndex: Int) {
         binding.viewSoundboardContainer.visibility = if (tabIndex == TAB_BOARD) View.VISIBLE else View.GONE
         binding.searchAndFilterCard.visibility = if (tabIndex == TAB_BOARD) View.VISIBLE else View.GONE
         binding.viewSettingsContainer.visibility = if (tabIndex == TAB_SETTINGS) View.VISIBLE else View.GONE
-        binding.viewAboutContainer.visibility = if (tabIndex == TAB_ABOUT) View.VISIBLE else View.GONE
 
-        val cyan = ContextCompat.getColor(this, R.color.accent_cyan)
-        val secondary = ContextCompat.getColor(this, R.color.text_secondary)
-
-        binding.btnNavSoundboard.setTextColor(if (tabIndex == TAB_BOARD) cyan else secondary)
-        binding.btnNavSettings.setTextColor(if (tabIndex == TAB_SETTINGS) cyan else secondary)
-        binding.btnNavAbout.setTextColor(if (tabIndex == TAB_ABOUT) cyan else secondary)
+        binding.btnCornerSettings.setBackgroundResource(
+            if (tabIndex == TAB_SETTINGS) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
+        )
 
         if (tabIndex == TAB_SETTINGS) {
             refreshPermissionStatusLabels()
@@ -230,14 +226,29 @@ class MainActivity : AppCompatActivity() {
 
         val opacityPct = (current.overlayOpacity * 100).roundToInt()
         binding.seekOverlayOpacity.progress = opacityPct
-        binding.tvOverlayOpacityLabel.text = "Overlay Opacity: $opacityPct%"
+        binding.tvOverlayOpacityLabel.text = "OVERLAY OPACITY: $opacityPct%"
+
+        binding.seekBubbleSize.progress = current.overlayBubbleSizeDp
+        binding.tvBubbleSizeLabel.text = "ROUND FLOATING ICON SIZE: ${current.overlayBubbleSizeDp} DP"
+
+        binding.seekBubbleSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val safeDp = progress.coerceIn(42, 96)
+                binding.tvBubbleSizeLabel.text = "ROUND FLOATING ICON SIZE: $safeDp DP"
+                if (fromUser) {
+                    container.settingsRepository.update { it.copy(overlayBubbleSizeDp = safeDp) }
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
 
         binding.switchHapticFeedback.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(hapticFeedback = checked) }
         }
         binding.switchCompactGrid.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(compactGrid = checked) }
-            gridLayoutManager.spanCount = if (checked) 3 else 2
+            gridLayoutManager.spanCount = if (checked) 2 else 1
         }
         binding.switchAudioFocus.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(requestAudioFocus = checked) }
@@ -264,7 +275,7 @@ class MainActivity : AppCompatActivity() {
         binding.seekOverlayOpacity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val safePct = progress.coerceIn(35, 100)
-                binding.tvOverlayOpacityLabel.text = "Overlay Opacity: $safePct%"
+                binding.tvOverlayOpacityLabel.text = "OVERLAY OPACITY: $safePct%"
                 if (fromUser) {
                     container.settingsRepository.update { it.copy(overlayOpacity = safePct / 100f) }
                 }
@@ -275,7 +286,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnResetOverlayBounds.setOnClickListener {
             container.overlayController.resetPositionAndSize()
-            Toast.makeText(this, "Overlay position and size reset.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "FLOATING ICON RESET", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnGrantOverlay.setOnClickListener {
@@ -283,10 +294,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnGrantMic.setOnClickListener {
-            if (container.permissionManager.hasRecordAudioPermission()) {
-                Toast.makeText(this, "Microphone permission is already granted.", Toast.LENGTH_SHORT).show()
+            if (!container.permissionManager.hasRecordAudioPermission()) {
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             } else {
-                showMicrophoneExplanationBeforeRequest()
+                Toast.makeText(this, "MIC DETECTION READY", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -297,24 +308,24 @@ class MainActivity : AppCompatActivity() {
                 notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
                 SoundboardForegroundService.start(this)
-                Toast.makeText(this, "Background notification service ready.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "BACKGROUND ENGINE ACTIVE", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun setupAboutScreen() {
         binding.tvAboutVersion.text =
-            "Version ${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})"
+            "VERSION ${BuildConfig.VERSION_NAME} • BUILD ${BuildConfig.VERSION_CODE}"
 
         binding.btnOpenGithub.setOnClickListener {
             try {
-                val intent = Intent(
-                    Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/notxpvp0182-collab/Soundboard")
+                startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/notxpvp0182-collab/Soundboard")
+                    )
                 )
-                startActivity(intent)
             } catch (_: Exception) {
-                Toast.makeText(this, "No web browser found.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -325,6 +336,7 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.filteredSounds.collectLatest { sounds ->
                         soundGridAdapter.submitList(sounds)
+                        binding.tvTotalSoundsMetric.text = sounds.size.toString()
                         binding.emptyStateContainer.visibility =
                             if (sounds.isEmpty()) View.VISIBLE else View.GONE
                     }
@@ -333,7 +345,7 @@ class MainActivity : AppCompatActivity() {
                     viewModel.activeSoundIds.collectLatest { activeIds ->
                         soundGridAdapter.updateActiveSoundIds(activeIds)
                         binding.tvActiveStreamsCount.text =
-                            if (activeIds.isEmpty()) "Idle" else "${activeIds.size} Playing"
+                            if (activeIds.isEmpty()) "IDLE" else "${activeIds.size} ACTIVE"
                     }
                 }
                 launch {
@@ -345,12 +357,15 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     viewModel.isOverlayShowing.collectLatest { showing ->
-                        binding.btnToggleOverlay.text = if (showing) "Hide Overlay" else "Overlay"
+                        binding.btnToggleOverlay.text = if (showing) "● OVERLAY ON" else "OVERLAY"
+                        binding.btnToggleOverlay.setBackgroundResource(
+                            if (showing) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
+                        )
                     }
                 }
                 launch {
-                    viewModel.isMicMonitoring.collectLatest { monitoring ->
-                        binding.btnMicMonitorToggle.alpha = if (monitoring) 1.0f else 0.45f
+                    container.micMonitorMixer.activeRouteLabel.collectLatest { route ->
+                        binding.tvRouteMetric.text = route
                     }
                 }
                 launch {
@@ -360,7 +375,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     container.messages.collectLatest { msg ->
-                        Toast.makeText(this@MainActivity, msg, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, msg.uppercase(), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -368,79 +383,53 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCategoryChipColors(activeFilter: String) {
-        val cyan = ContextCompat.getColor(this, R.color.accent_cyan)
+        val white = ContextCompat.getColor(this, R.color.text_primary)
         val secondary = ContextCompat.getColor(this, R.color.text_secondary)
 
-        binding.btnCatAll.setTextColor(if (activeFilter == MainViewModel.FILTER_ALL) cyan else secondary)
-        binding.btnCatFavorites.setTextColor(if (activeFilter == MainViewModel.FILTER_FAVORITES) cyan else secondary)
-        binding.btnCatRecent.setTextColor(if (activeFilter == MainViewModel.FILTER_RECENT) cyan else secondary)
-        binding.btnCatSfx.setTextColor(if (activeFilter == MainViewModel.FILTER_SFX) cyan else secondary)
-        binding.btnCatVoice.setTextColor(if (activeFilter == MainViewModel.FILTER_VOICE) cyan else secondary)
-        binding.btnCatMusic.setTextColor(if (activeFilter == MainViewModel.FILTER_MUSIC) cyan else secondary)
+        val pairs = listOf(
+            binding.btnCatAll to MainViewModel.FILTER_ALL,
+            binding.btnCatFavorites to MainViewModel.FILTER_FAVORITES,
+            binding.btnCatRecent to MainViewModel.FILTER_RECENT,
+            binding.btnCatSfx to MainViewModel.FILTER_SFX,
+            binding.btnCatVoice to MainViewModel.FILTER_VOICE,
+            binding.btnCatMusic to MainViewModel.FILTER_MUSIC
+        )
+
+        for ((btn, filter) in pairs) {
+            val active = activeFilter == filter
+            btn.setTextColor(if (active) white else secondary)
+            btn.setBackgroundResource(
+                if (active) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
+            )
+        }
     }
 
     private fun launchAudioImporter() {
         try {
             importAudioLauncher.launch(arrayOf("audio/*", "application/ogg"))
         } catch (_: Exception) {
-            Toast.makeText(this, "System file picker is unavailable on this device.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "FILE PICKER UNAVAILABLE", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun handleOverlayToggleRequest() {
         if (!container.permissionManager.canDrawOverlays()) {
             AlertDialog.Builder(this)
-                .setTitle("Enable Floating Overlay Permission")
-                .setMessage(
-                    "To display the movable glass Soundboard over games or chat apps, Android requires the \"Display over other apps\" permission."
-                )
-                .setPositiveButton("Open Settings") { _, _ ->
+                .setTitle("ENABLE FLOATING OVERLAY")
+                .setMessage("ALLOW DISPLAY OVER OTHER APPS TO USE THE FLOATING ROUND ICON.")
+                .setPositiveButton("SETTINGS") { _, _ ->
                     startActivity(container.permissionManager.buildOverlaySettingsIntent())
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("CANCEL", null)
                 .show()
             return
         }
 
         SoundboardForegroundService.start(this)
-        container.overlayController.toggleOverlay()
-    }
-
-    private fun showMicrophoneExplanationBeforeRequest() {
-        AlertDialog.Builder(this)
-            .setTitle("Microphone Local Monitor Permission")
-            .setMessage(
-                "Aura requests RECORD_AUDIO only when you activate Live Microphone Monitoring.\n\n" +
-                    "• Your microphone is never recorded to storage or sent over any network.\n" +
-                    "• Note: Unrooted Android isolates app microphone inputs. Local monitoring mixes your voice and soundboard locally for headphones or hardware AUX loopback."
-            )
-            .setPositiveButton("Continue") { _, _ ->
-                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun attemptToggleMicMonitor(allowSpeaker: Boolean = false) {
-        val result = container.micMonitorMixer.startMonitoring(allowWithoutHeadset = allowSpeaker)
-        result.onSuccess {
-            Toast.makeText(this, "Live Microphone Monitor active.", Toast.LENGTH_SHORT).show()
-        }.onFailure { err ->
-            if (err is IllegalStateException && !allowSpeaker) {
-                AlertDialog.Builder(this)
-                    .setTitle("Headset Feedback Warning")
-                    .setMessage(
-                        "${err.message}\n\nDo you still want to enable live microphone monitoring on the phone speaker?"
-                    )
-                    .setPositiveButton("Enable Anyway") { _, _ ->
-                        attemptToggleMicMonitor(allowSpeaker = true)
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-            } else {
-                Toast.makeText(this, err.message ?: "Unable to start mic monitor.", Toast.LENGTH_LONG).show()
-            }
+        if (!container.overlayController.isShowing.value) {
+            container.settingsRepository.update { it.copy(overlayMinimized = true) }
         }
+        container.overlayController.toggleOverlay()
     }
 
     private fun showSoundEditDialog(item: SoundItem) {
@@ -449,12 +438,12 @@ class MainActivity : AppCompatActivity() {
         dialogBinding.etEditSoundCategory.setText(item.category)
         val initialPct = (item.volume * 100).roundToInt().coerceIn(0, 100)
         dialogBinding.seekEditVolume.progress = initialPct
-        dialogBinding.tvEditVolumeValue.text = "Individual Sound Volume: $initialPct%"
+        dialogBinding.tvEditVolumeValue.text = "SOUND GAIN: $initialPct%"
         dialogBinding.cbEditFavorite.isChecked = item.isFavorite
 
         dialogBinding.seekEditVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                dialogBinding.tvEditVolumeValue.text = "Individual Sound Volume: $progress%"
+                dialogBinding.tvEditVolumeValue.text = "SOUND GAIN: $progress%"
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -509,53 +498,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun confirmDeleteSound(item: SoundItem) {
         AlertDialog.Builder(this)
-            .setTitle("Delete Sound?")
-            .setMessage("Remove \"${item.name}\" from your soundboard? Your original storage file outside the app will not be deleted.")
-            .setPositiveButton("Delete") { _, _ ->
+            .setTitle("DELETE SOUND?")
+            .setMessage("REMOVE \"${item.name.uppercase()}\" FROM SOUNDBOARD?")
+            .setPositiveButton("DELETE") { _, _ ->
                 viewModel.deleteSound(item)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("CANCEL", null)
             .show()
     }
 
     private fun showAudioRoutingDiagnosticDialog() {
         val caps = container.micMonitorMixer.inspectCapabilities()
         AlertDialog.Builder(this)
-            .setTitle("Audio Routing & Mic Architecture")
+            .setTitle("AUDIO & MIC ROUTING STATUS")
             .setMessage(caps.routingSummary)
-            .setPositiveButton("Got It", null)
-            .show()
-    }
-
-    private fun showFirstLaunchOnboardingDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Welcome to Aura Soundboard")
-            .setMessage(
-                "Designed for speed, low RAM usage (1–2 GB devices), and complete privacy.\n\n" +
-                    "• Import Audio: Add MP3, WAV, OGG, M4A, or FLAC clips via Android's secure file picker.\n" +
-                    "• Floating Glass Overlay: Grant 'Display over other apps' only when you want the movable, resizable overlay.\n" +
-                    "• Optional Mic Monitor: Requested only if you enable local voice monitoring.\n" +
-                    "• 100% Offline: Zero internet permissions."
-            )
-            .setPositiveButton("Get Started") { _, _ ->
-                container.settingsRepository.update { it.copy(onboardingCompleted = true) }
-            }
-            .setNeutralButton("Configure Overlay") { _, _ ->
-                container.settingsRepository.update { it.copy(onboardingCompleted = true) }
-                handleOverlayToggleRequest()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun showPermissionDeniedDialog(title: String, message: String) {
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("App Settings") { _, _ ->
-                startActivity(container.permissionManager.buildAppDetailsSettingsIntent())
-            }
-            .setNegativeButton("Close", null)
+            .setPositiveButton("CLOSE", null)
             .show()
     }
 
@@ -565,16 +522,15 @@ class MainActivity : AppCompatActivity() {
         val notifGranted = container.permissionManager.hasNotificationPermission()
 
         binding.tvPermOverlayStatus.text =
-            "Floating Overlay: ${if (overlayGranted) "Allowed ✓" else "Not Allowed"}"
+            "OVERLAY: ${if (overlayGranted) "ACTIVE ✓" else "REQUIRED"}"
         binding.tvPermMicStatus.text =
-            "Microphone Monitor: ${if (micGranted) "Allowed ✓" else "On-Demand"}"
+            "MIC ROUTE: ${if (micGranted) "ACTIVE ✓" else "AUTO"}"
         binding.tvPermNotifStatus.text =
-            "Background Service: ${if (notifGranted) "Allowed ✓" else "Not Allowed"}"
+            "BACKGROUND: ${if (notifGranted) "ACTIVE ✓" else "OPTIONAL"}"
     }
 
     companion object {
         private const val TAB_BOARD = 0
         private const val TAB_SETTINGS = 1
-        private const val TAB_ABOUT = 2
     }
 }

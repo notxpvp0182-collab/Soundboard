@@ -26,9 +26,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.roundToInt
 
+/**
+ * Two-Stage Floating Overlay Controller:
+ * 1. Round Floating Icon Bubble (Draggable, scalable in size, single-tap opens full panel).
+ * 2. Expanded Floating Soundboard Panel (Minimize button collapses back to Round Icon Bubble).
+ */
 class OverlayController(
     private val context: Context,
     private val permissionManager: PermissionManager,
@@ -66,6 +72,16 @@ class OverlayController(
             settingsRepository.settingsFlow.collectLatest { settings ->
                 binding?.overlayRoot?.alpha = settings.overlayOpacity
                 adapter?.updateShowLabels(settings.overlayShowLabels)
+                val b = binding
+                val lp = layoutParams
+                if (b != null && lp != null && settings.overlayMinimized) {
+                    val bubblePx = dpToPx(settings.overlayBubbleSizeDp)
+                    if (lp.width != bubblePx || lp.height != bubblePx) {
+                        lp.width = bubblePx
+                        lp.height = bubblePx
+                        safeUpdateViewLayout(b.root, lp)
+                    }
+                }
             }
         }
     }
@@ -96,8 +112,10 @@ class OverlayController(
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        val widthPx = dpToPx(settings.overlayWidthDp)
-        val heightPx = if (settings.overlayMinimized) dpToPx(58) else dpToPx(settings.overlayHeightDp)
+        val isBubble = settings.overlayMinimized
+        val bubblePx = dpToPx(settings.overlayBubbleSizeDp)
+        val widthPx = if (isBubble) bubblePx else dpToPx(settings.overlayWidthDp)
+        val heightPx = if (isBubble) bubblePx else dpToPx(settings.overlayHeightDp)
 
         val params = WindowManager.LayoutParams(
             widthPx,
@@ -113,8 +131,7 @@ class OverlayController(
         }
         layoutParams = params
 
-        val spanCount = calculateColumnsForWidthDp(settings.overlayWidthDp)
-        val glm = GridLayoutManager(themedContext, spanCount)
+        val glm = GridLayoutManager(themedContext, 1)
         gridLayoutManager = glm
 
         val soundAdapter = OverlaySoundAdapter { sound, view ->
@@ -129,12 +146,12 @@ class OverlayController(
 
         inflated.rvOverlaySounds.layoutManager = glm
         inflated.rvOverlaySounds.adapter = soundAdapter
-        inflated.rvOverlaySounds.itemAnimator = null // Zero animation overhead in floating window
+        inflated.rvOverlaySounds.itemAnimator = null
         inflated.overlayRoot.alpha = settings.overlayOpacity
         inflated.tvOverlayEmpty.visibility =
             if (soundRepository.soundsFlow.value.isEmpty()) View.VISIBLE else View.GONE
 
-        applyMinimizedState(inflated, settings.overlayMinimized)
+        applyBubbleOrPanelState(inflated, params, isBubble)
 
         inflated.seekOverlayMasterVol.progress = (settings.masterVolume * 100).roundToInt()
         inflated.seekOverlayMasterVol.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -154,12 +171,12 @@ class OverlayController(
             audioEngine.stopAll()
         }
 
-        inflated.btnOverlayMinimize.setOnClickListener {
-            val nextMinimized = !settingsRepository.current.overlayMinimized
-            settingsRepository.update { it.copy(overlayMinimized = nextMinimized) }
-            applyMinimizedState(inflated, nextMinimized)
+        // Minimize button collapses panel back into the Round Floating Bubble Icon
+        inflated.btnOverlayMinimize.setOnClickListener { view ->
+            HapticHelper.performTap(view, settingsRepository.current.hapticFeedback)
             val lp = layoutParams ?: return@setOnClickListener
-            lp.height = if (nextMinimized) dpToPx(58) else dpToPx(settingsRepository.current.overlayHeightDp)
+            settingsRepository.update { it.copy(overlayMinimized = true) }
+            applyBubbleOrPanelState(inflated, lp, isBubble = true)
             safeUpdateViewLayout(inflated.root, lp)
         }
 
@@ -167,7 +184,55 @@ class OverlayController(
             hideOverlay()
         }
 
-        // Drag interaction on header
+        // Drag + Tap interaction on the Round Floating Bubble Icon
+        var bubbleInitX = 0
+        var bubbleInitY = 0
+        var bubbleTouchX = 0f
+        var bubbleTouchY = 0f
+        var isBubbleDragging = false
+
+        inflated.overlayBubbleContainer.setOnTouchListener { view, event ->
+            val lp = layoutParams ?: return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    bubbleInitX = lp.x
+                    bubbleInitY = lp.y
+                    bubbleTouchX = event.rawX
+                    bubbleTouchY = event.rawY
+                    isBubbleDragging = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = (event.rawX - bubbleTouchX).roundToInt()
+                    val dy = (event.rawY - bubbleTouchY).roundToInt()
+                    if (abs(dx) > 10 || abs(dy) > 10) {
+                        isBubbleDragging = true
+                    }
+                    if (isBubbleDragging) {
+                        val metrics = getScreenMetrics()
+                        lp.x = (bubbleInitX + dx).coerceIn(0, max(0, metrics.widthPixels - lp.width))
+                        lp.y = (bubbleInitY + dy).coerceIn(0, max(0, metrics.heightPixels - lp.height))
+                        safeUpdateViewLayout(inflated.root, lp)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (!isBubbleDragging) {
+                        // Single tap on Round Floating Icon opens the full Soundboard Panel!
+                        HapticHelper.performTap(view, settingsRepository.current.hapticFeedback)
+                        settingsRepository.update { it.copy(overlayMinimized = false) }
+                        applyBubbleOrPanelState(inflated, lp, isBubble = false)
+                        safeUpdateViewLayout(inflated.root, lp)
+                    } else {
+                        settingsRepository.update { it.copy(overlayX = lp.x, overlayY = lp.y) }
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
+        // Drag interaction on Expanded Panel Header
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
@@ -200,7 +265,7 @@ class OverlayController(
             }
         }
 
-        // Corner Resize Interaction
+        // Corner Resize Handle on Expanded Panel
         var startWidthPx = 0
         var startHeightPx = 0
         var resizeStartX = 0f
@@ -219,11 +284,11 @@ class OverlayController(
                 MotionEvent.ACTION_MOVE -> {
                     val dw = (event.rawX - resizeStartX).roundToInt()
                     val dh = (event.rawY - resizeStartY).roundToInt()
-                    val newWidthDp = pxToDp(startWidthPx + dw).coerceIn(190, 480)
-                    val newHeightDp = pxToDp(startHeightPx + dh).coerceIn(180, 620)
+                    val newWidthDp = pxToDp(startWidthPx + dw).coerceIn(210, 480)
+                    val newHeightDp = pxToDp(startHeightPx + dh).coerceIn(200, 620)
                     lp.width = dpToPx(newWidthDp)
                     lp.height = dpToPx(newHeightDp)
-                    val newCols = calculateColumnsForWidthDp(newWidthDp)
+                    val newCols = if (newWidthDp >= 320) 2 else 1
                     if (gridLayoutManager?.spanCount != newCols) {
                         gridLayoutManager?.spanCount = newCols
                     }
@@ -233,8 +298,8 @@ class OverlayController(
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     settingsRepository.update {
                         it.copy(
-                            overlayWidthDp = pxToDp(lp.width).coerceIn(190, 480),
-                            overlayHeightDp = pxToDp(lp.height).coerceIn(180, 620)
+                            overlayWidthDp = pxToDp(lp.width).coerceIn(210, 480),
+                            overlayHeightDp = pxToDp(lp.height).coerceIn(200, 620)
                         )
                     }
                     true
@@ -271,27 +336,41 @@ class OverlayController(
     fun resetPositionAndSize() {
         settingsRepository.update {
             it.copy(
-                overlayX = 36,
-                overlayY = 150,
-                overlayWidthDp = 270,
-                overlayHeightDp = 300,
-                overlayMinimized = false
+                overlayX = 24,
+                overlayY = 180,
+                overlayWidthDp = 280,
+                overlayHeightDp = 320,
+                overlayBubbleSizeDp = 58,
+                overlayMinimized = true
             )
         }
         val b = binding ?: return
         val lp = layoutParams ?: return
-        lp.x = 36
-        lp.y = 150
-        lp.width = dpToPx(270)
-        lp.height = dpToPx(300)
-        applyMinimizedState(b, false)
-        gridLayoutManager?.spanCount = calculateColumnsForWidthDp(270)
+        lp.x = 24
+        lp.y = 180
+        applyBubbleOrPanelState(b, lp, isBubble = true)
         safeUpdateViewLayout(b.root, lp)
     }
 
-    private fun applyMinimizedState(b: LayoutFloatingOverlayBinding, minimized: Boolean) {
-        b.overlayBody.visibility = if (minimized) View.GONE else View.VISIBLE
-        b.btnOverlayMinimize.text = if (minimized) "▢" else "—"
+    private fun applyBubbleOrPanelState(
+        b: LayoutFloatingOverlayBinding,
+        lp: WindowManager.LayoutParams,
+        isBubble: Boolean
+    ) {
+        val s = settingsRepository.current
+        if (isBubble) {
+            val sizePx = dpToPx(s.overlayBubbleSizeDp)
+            lp.width = sizePx
+            lp.height = sizePx
+            b.overlayBubbleContainer.visibility = View.VISIBLE
+            b.overlayBody.visibility = View.GONE
+        } else {
+            lp.width = dpToPx(s.overlayWidthDp)
+            lp.height = dpToPx(s.overlayHeightDp)
+            b.overlayBubbleContainer.visibility = View.GONE
+            b.overlayBody.visibility = View.VISIBLE
+            gridLayoutManager?.spanCount = if (s.overlayWidthDp >= 320) 2 else 1
+        }
     }
 
     private fun safeUpdateViewLayout(view: View, params: WindowManager.LayoutParams) {
@@ -300,15 +379,6 @@ class OverlayController(
                 windowManager.updateViewLayout(view, params)
             }
         } catch (_: Exception) {
-        }
-    }
-
-    private fun calculateColumnsForWidthDp(widthDp: Int): Int {
-        return when {
-            widthDp < 225 -> 1
-            widthDp < 330 -> 2
-            widthDp < 420 -> 3
-            else -> 4
         }
     }
 

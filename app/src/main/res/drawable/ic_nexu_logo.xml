@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Dark 3D Squircle Base -->
+    <path
+        android:fillColor="#141720"
+        android:strokeColor="#2EFFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M20,6H44A14,14 0,0 1,58 20V44A14,14 0,0 1,44 58H20A14,14 0,0 1,6 44V20A14,14 0,0 1,20 6Z" />
+    <!-- Glowing Left Vertical Pill Eye -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M25,21A3,3 0,0 1,28 24V34A3,3 0,0 1,22 34V24A3,3 0,0 1,25 21Z" />
+    <!-- Glowing Right Vertical Pill Eye -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39,21A3,3 0,0 1,42 24V34A3,3 0,0 1,36 34V24A3,3 0,0 1,39 21Z" />
+</vector>
