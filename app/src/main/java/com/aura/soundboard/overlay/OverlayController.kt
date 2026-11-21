@@ -85,7 +85,7 @@ class OverlayController(
         if (!permissionManager.canDrawOverlays()) return false
 
         val settings = settingsRepository.current
-        val themedContext = ContextThemeWrapper(context, R.style.Theme.AuraSoundboard)
+        val themedContext = ContextThemeWrapper(context, R.style.Theme_AuraSoundboard)
         val inflated = LayoutFloatingOverlayBinding.inflate(LayoutInflater.from(themedContext))
         binding = inflated
 
