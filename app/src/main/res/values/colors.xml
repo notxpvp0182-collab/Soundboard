@@ -1,32 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Pitch-Black NexuSec Carbon Palette -->
-    <color name="bg_obsidian_deep">#050507</color>
-    <color name="bg_obsidian_surface">#0B0D13</color>
-    <color name="bg_dialog_solid">#0E1017</color>
+    <color name="bg_obsidian_deep">#000000</color>
+    <color name="bg_obsidian_surface">#09090C</color>
+    <color name="bg_dialog_solid">#0C0C10</color>
 
-    <!-- Matte Dark Translucent Cards -->
-    <color name="glass_panel_fill">#0C0E14</color>
-    <color name="glass_panel_elevated">#141822</color>
-    <color name="glass_panel_active">#131B2E</color>
-    <color name="glass_overlay_bg">#F2090B10</color>
+    <color name="glass_panel_fill">#0A0A0E</color>
+    <color name="glass_panel_elevated">#14141A</color>
+    <color name="glass_panel_active">#1A1A22</color>
+    <color name="glass_overlay_bg">#F507070A</color>
 
-    <!-- Subtle Hairline 3D Borders -->
-    <color name="glass_border_subtle">#18FFFFFF</color>
-    <color name="glass_border_highlight">#2BFFFFFF</color>
-    <color name="glass_border_cyan">#883B82F6</color>
+    <color name="glass_border_subtle">#1CFFFFFF</color>
+    <color name="glass_border_highlight">#38FFFFFF</color>
+    <color name="glass_border_cyan">#99FFFFFF</color>
 
-    <!-- Soft Accent Palette (NexuSec Blue, Indigo, Emerald, Amber, Crimson) -->
-    <color name="accent_cyan">#3B82F6</color>
-    <color name="accent_cyan_dim">#263B82F6</color>
-    <color name="accent_indigo">#6366F1</color>
+    <color name="accent_cyan">#FFFFFF</color>
+    <color name="accent_cyan_dim">#26FFFFFF</color>
+    <color name="accent_indigo">#E4E4E7</color>
     <color name="accent_purple">#A855F7</color>
     <color name="accent_emerald">#10B981</color>
     <color name="accent_danger">#EF4444</color>
     <color name="accent_warning">#F59E0B</color>
 
-    <!-- Crisp Dark & White Typography -->
     <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#8E96A8</color>
-    <color name="text_muted">#565E70</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#52525B</color>
 </resources>

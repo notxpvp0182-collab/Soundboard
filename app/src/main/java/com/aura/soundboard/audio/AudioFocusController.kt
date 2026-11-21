@@ -13,6 +13,7 @@ class AudioFocusController(
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var focusRequest: AudioFocusRequest? = null
     private var hasFocus = false
+    private var previousSpeakerState: Boolean? = null
 
     private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { change ->
         when (change) {
@@ -24,22 +25,34 @@ class AudioFocusController(
         }
     }
 
-    fun requestTransientFocus(voiceCommMode: Boolean): Boolean {
+    fun requestTransientFocus(micOverrideMode: Boolean): Boolean {
+        try {
+            if (micOverrideMode) {
+                if (previousSpeakerState == null) {
+                    previousSpeakerState = audioManager.isSpeakerphoneOn
+                }
+                if (!audioManager.isWiredHeadsetOn && !audioManager.isBluetoothScoOn && !audioManager.isBluetoothA2dpOn) {
+                    audioManager.isSpeakerphoneOn = true
+                }
+            }
+        } catch (_: Exception) {
+        }
+
         if (hasFocus) return true
         return try {
+            val focusType = if (micOverrideMode) {
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE
+            } else {
+                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val attrs = AudioAttributes.Builder()
-                    .setUsage(
-                        if (voiceCommMode) AudioAttributes.USAGE_VOICE_COMMUNICATION
-                        else AudioAttributes.USAGE_MEDIA
-                    )
-                    .setContentType(
-                        if (voiceCommMode) AudioAttributes.CONTENT_TYPE_SPEECH
-                        else AudioAttributes.CONTENT_TYPE_SONIFICATION
-                    )
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build()
 
-                val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                val req = AudioFocusRequest.Builder(focusType)
                     .setAudioAttributes(attrs)
                     .setOnAudioFocusChangeListener(focusChangeListener)
                     .build()
@@ -51,8 +64,8 @@ class AudioFocusController(
                 @Suppress("DEPRECATION")
                 val res = audioManager.requestAudioFocus(
                     focusChangeListener,
-                    if (voiceCommMode) AudioManager.STREAM_VOICE_CALL else AudioManager.STREAM_MUSIC,
-                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+                    AudioManager.STREAM_MUSIC,
+                    focusType
                 )
                 hasFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
                 hasFocus
@@ -63,6 +76,15 @@ class AudioFocusController(
     }
 
     fun abandonFocus() {
+        try {
+            previousSpeakerState?.let { prev ->
+                audioManager.isSpeakerphoneOn = prev
+            }
+        } catch (_: Exception) {
+        } finally {
+            previousSpeakerState = null
+        }
+
         if (!hasFocus) return
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

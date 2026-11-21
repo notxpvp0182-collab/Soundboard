@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.media.audiofx.LoudnessEnhancer
 import android.net.Uri
 import com.aura.soundboard.models.SoundItem
 import com.aura.soundboard.repository.SettingsRepository
@@ -19,9 +20,10 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Memory-safe Hybrid Audio Engine optimized for 1–2 GB RAM Android devices:
- * - Short clips (<= 5.5s and <= 1.5MB) use SoundPool with a bounded 16-slot cache for <15ms trigger latency.
- * - Longer audio files stream via MediaPlayer directly from disk without decoding entire files into RAM.
+ * Mic-Override & Low-Latency Audio Engine:
+ * - Never routes to USAGE_VOICE_COMMUNICATION earpiece (which Android's hardware AEC subtracts from the mic!).
+ * - Routes via USAGE_MEDIA + Exclusive Transient Focus + Speaker Proximity Override + Hardware LoudnessEnhancer DSP boost
+ *   so soundboard playback dominates the microphone pickup cleanly over user speech during calls/voice chats.
  */
 class HybridAudioEngine(
     private val context: Context,
@@ -39,18 +41,13 @@ class HybridAudioEngine(
     }
 
     private var soundPool: SoundPool? = null
-    // soundItemId -> soundPoolSampleId
     private val loadedPoolSamples = LinkedHashMap<Long, Int>(16, 0.75f, true)
-    // soundPoolSampleId -> SoundItem waiting to play once loaded
     private val pendingPoolPlays = ConcurrentHashMap<Int, SoundItem>()
-    // soundItemId -> active SoundPool streamId
     private val activePoolStreams = ConcurrentHashMap<Long, Int>()
-    // soundItemId -> timer job that clears active indicator after duration
     private val poolCompletionJobs = ConcurrentHashMap<Long, Job>()
 
-    // soundItemId -> active streaming MediaPlayer
     private val activeMediaPlayers = ConcurrentHashMap<Long, MediaPlayer>()
-    // soundItemId -> individual volume
+    private val activeEnhancers = ConcurrentHashMap<Long, LoudnessEnhancer>()
     private val activeItemVolumes = ConcurrentHashMap<Long, Float>()
 
     init {
@@ -60,7 +57,7 @@ class HybridAudioEngine(
     private fun initSoundPool() {
         val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
         soundPool = SoundPool.Builder()
@@ -93,14 +90,12 @@ class HybridAudioEngine(
             stopSound(item.id)
         }
 
-        if (settings.requestAudioFocus) {
-            focusController.requestTransientFocus(settings.voiceCommRouting)
-        }
-
+        focusController.requestTransientFocus(settings.voiceCommRouting)
         activeItemVolumes[item.id] = item.volume.coerceIn(0f, 1f)
         scope.launch { soundRepository.markPlayed(item.id) }
 
-        if (item.isShortClip) {
+        // In Mic-Override Boost mode, use MediaPlayer with hardware LoudnessEnhancer DSP boost
+        if (!settings.voiceCommRouting && item.isShortClip) {
             playViaSoundPool(item)
         } else {
             playViaStreamingMediaPlayer(item)
@@ -131,7 +126,6 @@ class HybridAudioEngine(
                     val sampleId = pool.load(descriptor.fileDescriptor, 0L, descriptor.statSize, 1)
                     if (sampleId > 0) {
                         synchronized(loadedPoolSamples) {
-                            // Evict oldest sample if cache exceeds 16 clips to keep RAM footprint tiny
                             if (loadedPoolSamples.size >= MAX_CACHED_POOL_SAMPLES) {
                                 val eldest = loadedPoolSamples.entries.iterator().next()
                                 pool.unload(eldest.value)
@@ -174,12 +168,10 @@ class HybridAudioEngine(
                 val settings = settingsRepository.current
                 val uri = Uri.parse(item.uriString)
                 val mp = MediaPlayer()
+                // Use USAGE_MEDIA so Android's Call Echo Canceller (AEC) does NOT subtract the sound from the microphone!
                 mp.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(
-                            if (settings.voiceCommRouting) AudioAttributes.USAGE_VOICE_COMMUNICATION
-                            else AudioAttributes.USAGE_MEDIA
-                        )
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
@@ -194,13 +186,26 @@ class HybridAudioEngine(
                     true
                 }
                 mp.prepare()
+
+                // Attach Hardware DSP LoudnessEnhancer in Mic Override mode to dominate mic pickup
+                if (settings.voiceCommRouting) {
+                    try {
+                        val enhancer = LoudnessEnhancer(mp.audioSessionId)
+                        val boostMb = (650 * effectiveVol).toInt().coerceIn(0, 700)
+                        enhancer.setTargetGain(boostMb)
+                        enhancer.enabled = true
+                        activeEnhancers[item.id] = enhancer
+                    } catch (_: Exception) {
+                    }
+                }
+
                 activeMediaPlayers[item.id] = mp
                 markSoundActive(item.id, true)
                 mp.start()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 markSoundActive(item.id, false)
                 scope.launch(Dispatchers.Main) {
-                    onPlaybackError("Could not play \"${item.name}\". File may have been moved or deleted.")
+                    onPlaybackError("UNABLE TO PLAY ${item.name}")
                 }
             }
         }
@@ -274,7 +279,6 @@ class HybridAudioEngine(
     }
 
     override fun onTrimMemory() {
-        // Free cached SoundPool PCM buffers when Android signals low RAM
         synchronized(loadedPoolSamples) {
             val pool = soundPool ?: return
             val iterator = loadedPoolSamples.entries.iterator()
@@ -302,6 +306,12 @@ class HybridAudioEngine(
 
     private fun cleanupMediaPlayer(soundId: Long, player: MediaPlayer) {
         activeMediaPlayers.remove(soundId)
+        activeEnhancers.remove(soundId)?.let { enhancer ->
+            try {
+                enhancer.release()
+            } catch (_: Exception) {
+            }
+        }
         try {
             if (player.isPlaying) player.stop()
         } catch (_: Exception) {

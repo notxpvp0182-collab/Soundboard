@@ -1,7 +1,9 @@
 package com.aura.soundboard.ui
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -29,6 +32,7 @@ import com.aura.soundboard.models.SoundItem
 import com.aura.soundboard.service.SoundboardForegroundService
 import com.aura.soundboard.ui.components.SoundGridAdapter
 import com.aura.soundboard.utils.HapticHelper
+import com.aura.soundboard.utils.UiAnimator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -42,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var soundGridAdapter: SoundGridAdapter
     private lateinit var gridLayoutManager: GridLayoutManager
-    private var isSettingsOpen = false
+    private var isSettingsPageVisible = false
 
     private val importAudioLauncher = registerForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
@@ -71,11 +75,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupBackNavigation()
         runLoadingScreenSequence()
         setupRecyclerView()
         setupTopAndMasterBars()
         setupSearchAndCategories()
-        setupSettingsControls()
+        setupSettingsPageAndSubTabs()
         setupAboutScreen()
         observeState()
     }
@@ -95,18 +100,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isSettingsPageVisible) {
+                    closeSettingsPage()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
+    }
+
     private fun runLoadingScreenSequence() {
         binding.loadingOverlayContainer.visibility = View.VISIBLE
-        binding.loadingProgressBar.progress = 25
+        binding.ivLoadingLogo.scaleX = 0.82f
+        binding.ivLoadingLogo.scaleY = 0.82f
+        binding.ivLoadingLogo.animate()
+            .scaleX(1.04f)
+            .scaleY(1.04f)
+            .setDuration(550)
+            .withEndAction {
+                binding.ivLoadingLogo.animate().scaleX(1.0f).scaleY(1.0f).setDuration(250).start()
+            }
+            .start()
+
+        ValueAnimator.ofInt(15, 100).apply {
+            duration = 820
+            addUpdateListener { anim ->
+                binding.loadingProgressBar.progress = anim.animatedValue as Int
+            }
+            start()
+        }
+
         lifecycleScope.launch {
-            delay(280)
-            binding.loadingProgressBar.progress = 70
-            delay(320)
-            binding.loadingProgressBar.progress = 100
-            delay(180)
+            delay(880)
             binding.loadingOverlayContainer.animate()
                 .alpha(0f)
-                .setDuration(220)
+                .setDuration(240)
                 .withEndAction {
                     binding.loadingOverlayContainer.visibility = View.GONE
                 }
@@ -131,7 +163,9 @@ class MainActivity : AppCompatActivity() {
             onEditClicked = { item ->
                 showSoundEditDialog(item)
             }
-        )
+        ).apply {
+            reducedMotion = container.settingsRepository.current.reducedMotion
+        }
 
         binding.rvSoundGrid.layoutManager = gridLayoutManager
         binding.rvSoundGrid.adapter = soundGridAdapter
@@ -140,23 +174,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupTopAndMasterBars() {
         binding.btnNavImport.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
             launchAudioImporter()
         }
 
         binding.btnToggleOverlay.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
             handleOverlayToggleRequest()
         }
 
-        binding.btnAudioRoutingGuide.setOnClickListener {
+        binding.btnAudioRoutingGuide.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             showAudioRoutingDiagnosticDialog()
         }
 
         binding.btnCornerSettings.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
-            isSettingsOpen = !isSettingsOpen
-            switchTab(if (isSettingsOpen) TAB_SETTINGS else TAB_BOARD)
+            openSettingsPage()
+        }
+
+        binding.btnBackFromSettings.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
+            HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
+            closeSettingsPage()
         }
 
         binding.seekMasterVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -171,13 +214,38 @@ class MainActivity : AppCompatActivity() {
         })
 
         binding.btnStopAllMain.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             HapticHelper.performTap(view, container.settingsRepository.current.hapticFeedback)
             viewModel.stopAllSounds()
         }
 
-        binding.btnImportFirstSound.setOnClickListener {
+        binding.btnImportFirstSound.setOnClickListener { view ->
+            UiAnimator.bounceTap(view, container.settingsRepository.current.reducedMotion)
             launchAudioImporter()
         }
+    }
+
+    private fun openSettingsPage() {
+        if (isSettingsPageVisible) return
+        isSettingsPageVisible = true
+        refreshPermissionStatusLabels()
+        UiAnimator.switchPage(
+            hideView = binding.pageDashboardRoot,
+            showView = binding.viewSettingsContainer,
+            slideForward = true,
+            reducedMotion = container.settingsRepository.current.reducedMotion
+        )
+    }
+
+    private fun closeSettingsPage() {
+        if (!isSettingsPageVisible) return
+        isSettingsPageVisible = false
+        UiAnimator.switchPage(
+            hideView = binding.viewSettingsContainer,
+            showView = binding.pageDashboardRoot,
+            slideForward = false,
+            reducedMotion = container.settingsRepository.current.reducedMotion
+        )
     }
 
     private fun setupSearchAndCategories() {
@@ -189,29 +257,47 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        binding.btnCatAll.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_ALL) }
-        binding.btnCatFavorites.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_FAVORITES) }
-        binding.btnCatRecent.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_RECENT) }
-        binding.btnCatSfx.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_SFX) }
-        binding.btnCatVoice.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_VOICE) }
-        binding.btnCatMusic.setOnClickListener { viewModel.setCategoryFilter(MainViewModel.FILTER_MUSIC) }
-    }
-
-    private fun switchTab(tabIndex: Int) {
-        binding.viewSoundboardContainer.visibility = if (tabIndex == TAB_BOARD) View.VISIBLE else View.GONE
-        binding.searchAndFilterCard.visibility = if (tabIndex == TAB_BOARD) View.VISIBLE else View.GONE
-        binding.viewSettingsContainer.visibility = if (tabIndex == TAB_SETTINGS) View.VISIBLE else View.GONE
-
-        binding.btnCornerSettings.setBackgroundResource(
-            if (tabIndex == TAB_SETTINGS) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
-        )
-
-        if (tabIndex == TAB_SETTINGS) {
-            refreshPermissionStatusLabels()
+        binding.btnCatAll.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_ALL)
+        }
+        binding.btnCatFavorites.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_FAVORITES)
+        }
+        binding.btnCatRecent.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_RECENT)
+        }
+        binding.btnCatSfx.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_SFX)
+        }
+        binding.btnCatVoice.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_VOICE)
+        }
+        binding.btnCatMusic.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            viewModel.setCategoryFilter(MainViewModel.FILTER_MUSIC)
         }
     }
 
-    private fun setupSettingsControls() {
+    private fun setupSettingsPageAndSubTabs() {
+        // Sub-page navigation inside Settings
+        binding.btnSetTabAudio.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            selectSettingsSubPage(0)
+        }
+        binding.btnSetTabOverlay.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            selectSettingsSubPage(1)
+        }
+        binding.btnSetTabSystem.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
+            selectSettingsSubPage(2)
+        }
+
         val current = container.settingsRepository.current
 
         binding.switchHapticFeedback.isChecked = current.hapticFeedback
@@ -226,15 +312,15 @@ class MainActivity : AppCompatActivity() {
 
         val opacityPct = (current.overlayOpacity * 100).roundToInt()
         binding.seekOverlayOpacity.progress = opacityPct
-        binding.tvOverlayOpacityLabel.text = "OVERLAY OPACITY: $opacityPct%"
+        binding.tvOverlayOpacityLabel.text = "PANEL OPACITY: $opacityPct%"
 
         binding.seekBubbleSize.progress = current.overlayBubbleSizeDp
-        binding.tvBubbleSizeLabel.text = "ROUND FLOATING ICON SIZE: ${current.overlayBubbleSizeDp} DP"
+        binding.tvBubbleSizeLabel.text = "ROUND BUBBLE SIZE: ${current.overlayBubbleSizeDp} DP"
 
         binding.seekBubbleSize.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val safeDp = progress.coerceIn(42, 96)
-                binding.tvBubbleSizeLabel.text = "ROUND FLOATING ICON SIZE: $safeDp DP"
+                val safeDp = progress.coerceIn(44, 96)
+                binding.tvBubbleSizeLabel.text = "ROUND BUBBLE SIZE: $safeDp DP"
                 if (fromUser) {
                     container.settingsRepository.update { it.copy(overlayBubbleSizeDp = safeDp) }
                 }
@@ -255,6 +341,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.switchVoiceCommMode.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(voiceCommRouting = checked) }
+            binding.tvRouteMetric.text = if (checked) "MIC OVERRIDE + BOOST" else "STANDARD MEDIA"
         }
         binding.switchOverlapSounds.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(allowOverlap = checked) }
@@ -270,12 +357,13 @@ class MainActivity : AppCompatActivity() {
         }
         binding.switchReducedMotion.setOnCheckedChangeListener { _, checked ->
             container.settingsRepository.update { it.copy(reducedMotion = checked) }
+            soundGridAdapter.reducedMotion = checked
         }
 
         binding.seekOverlayOpacity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val safePct = progress.coerceIn(35, 100)
-                binding.tvOverlayOpacityLabel.text = "OVERLAY OPACITY: $safePct%"
+                binding.tvOverlayOpacityLabel.text = "PANEL OPACITY: $safePct%"
                 if (fromUser) {
                     container.settingsRepository.update { it.copy(overlayOpacity = safePct / 100f) }
                 }
@@ -284,9 +372,10 @@ class MainActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        binding.btnResetOverlayBounds.setOnClickListener {
+        binding.btnResetOverlayBounds.setOnClickListener { view ->
+            UiAnimator.bounceTap(view)
             container.overlayController.resetPositionAndSize()
-            Toast.makeText(this, "FLOATING ICON RESET", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "BUBBLE RESET", Toast.LENGTH_SHORT).show()
         }
 
         binding.btnGrantOverlay.setOnClickListener {
@@ -297,7 +386,7 @@ class MainActivity : AppCompatActivity() {
             if (!container.permissionManager.hasRecordAudioPermission()) {
                 micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             } else {
-                Toast.makeText(this, "MIC DETECTION READY", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "MIC READY", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -308,8 +397,23 @@ class MainActivity : AppCompatActivity() {
                 notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
                 SoundboardForegroundService.start(this)
-                Toast.makeText(this, "BACKGROUND ENGINE ACTIVE", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "ENGINE ACTIVE", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun selectSettingsSubPage(index: Int) {
+        binding.subPageAudio.visibility = if (index == 0) View.VISIBLE else View.GONE
+        binding.subPageOverlay.visibility = if (index == 1) View.VISIBLE else View.GONE
+        binding.subPageSystem.visibility = if (index == 2) View.VISIBLE else View.GONE
+
+        val tabs = listOf(binding.btnSetTabAudio, binding.btnSetTabOverlay, binding.btnSetTabSystem)
+        tabs.forEachIndexed { idx, btn ->
+            val selected = idx == index
+            btn.setBackgroundResource(
+                if (selected) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
+            )
+            btn.setTextColor(if (selected) Color.BLACK else Color.WHITE)
         }
     }
 
@@ -345,7 +449,7 @@ class MainActivity : AppCompatActivity() {
                     viewModel.activeSoundIds.collectLatest { activeIds ->
                         soundGridAdapter.updateActiveSoundIds(activeIds)
                         binding.tvActiveStreamsCount.text =
-                            if (activeIds.isEmpty()) "IDLE" else "${activeIds.size} ACTIVE"
+                            if (activeIds.isEmpty()) "IDLE" else "${activeIds.size} LIVE"
                     }
                 }
                 launch {
@@ -357,7 +461,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     viewModel.isOverlayShowing.collectLatest { showing ->
-                        binding.btnToggleOverlay.text = if (showing) "● OVERLAY ON" else "OVERLAY"
+                        binding.btnToggleOverlay.text = if (showing) "● OVERLAY" else "OVERLAY"
+                        binding.btnToggleOverlay.setTextColor(if (showing) Color.BLACK else Color.WHITE)
                         binding.btnToggleOverlay.setBackgroundResource(
                             if (showing) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
                         )
@@ -365,7 +470,8 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     container.micMonitorMixer.activeRouteLabel.collectLatest { route ->
-                        binding.tvRouteMetric.text = route
+                        val overrideOn = container.settingsRepository.current.voiceCommRouting
+                        binding.tvRouteMetric.text = if (overrideOn) "MIC BOOST • $route" else route
                     }
                 }
                 launch {
@@ -383,7 +489,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCategoryChipColors(activeFilter: String) {
-        val white = ContextCompat.getColor(this, R.color.text_primary)
         val secondary = ContextCompat.getColor(this, R.color.text_secondary)
 
         val pairs = listOf(
@@ -397,7 +502,7 @@ class MainActivity : AppCompatActivity() {
 
         for ((btn, filter) in pairs) {
             val active = activeFilter == filter
-            btn.setTextColor(if (active) white else secondary)
+            btn.setTextColor(if (active) Color.BLACK else secondary)
             btn.setBackgroundResource(
                 if (active) R.drawable.bg_3d_button_active else R.drawable.bg_3d_button
             )
@@ -415,8 +520,8 @@ class MainActivity : AppCompatActivity() {
     private fun handleOverlayToggleRequest() {
         if (!container.permissionManager.canDrawOverlays()) {
             AlertDialog.Builder(this)
-                .setTitle("ENABLE FLOATING OVERLAY")
-                .setMessage("ALLOW DISPLAY OVER OTHER APPS TO USE THE FLOATING ROUND ICON.")
+                .setTitle("OVERLAY PERMISSION")
+                .setMessage("ALLOW DISPLAY OVER OTHER APPS FOR FLOATING ROUND ICON.")
                 .setPositiveButton("SETTINGS") { _, _ ->
                     startActivity(container.permissionManager.buildOverlaySettingsIntent())
                 }
@@ -499,7 +604,7 @@ class MainActivity : AppCompatActivity() {
     private fun confirmDeleteSound(item: SoundItem) {
         AlertDialog.Builder(this)
             .setTitle("DELETE SOUND?")
-            .setMessage("REMOVE \"${item.name.uppercase()}\" FROM SOUNDBOARD?")
+            .setMessage("REMOVE \"${item.name.uppercase()}\"?")
             .setPositiveButton("DELETE") { _, _ ->
                 viewModel.deleteSound(item)
             }
@@ -510,7 +615,7 @@ class MainActivity : AppCompatActivity() {
     private fun showAudioRoutingDiagnosticDialog() {
         val caps = container.micMonitorMixer.inspectCapabilities()
         AlertDialog.Builder(this)
-            .setTitle("AUDIO & MIC ROUTING STATUS")
+            .setTitle("MIC OVERRIDE & ROUTING")
             .setMessage(caps.routingSummary)
             .setPositiveButton("CLOSE", null)
             .show()
@@ -524,13 +629,8 @@ class MainActivity : AppCompatActivity() {
         binding.tvPermOverlayStatus.text =
             "OVERLAY: ${if (overlayGranted) "ACTIVE ✓" else "REQUIRED"}"
         binding.tvPermMicStatus.text =
-            "MIC ROUTE: ${if (micGranted) "ACTIVE ✓" else "AUTO"}"
+            "MIC ACCESS: ${if (micGranted) "ACTIVE ✓" else "AUTO"}"
         binding.tvPermNotifStatus.text =
             "BACKGROUND: ${if (notifGranted) "ACTIVE ✓" else "OPTIONAL"}"
-    }
-
-    companion object {
-        private const val TAB_BOARD = 0
-        private const val TAB_SETTINGS = 1
     }
 }

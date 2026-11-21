@@ -10,7 +10,6 @@
     android:paddingHorizontal="12dp"
     android:paddingVertical="10dp">
 
-    <!-- Left Colored Squircle Badge (Screenshot 5 Serial Row Icon Box) -->
     <FrameLayout
         android:id="@+id/badgeContainer"
         android:layout_width="38dp"
@@ -25,11 +24,10 @@
             android:background="@drawable/ic_sound_wave" />
     </FrameLayout>
 
-    <!-- Middle Serial Info: Title + Small-Caps Category Badge + Volume Pill -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
+        android:layout_marginHorizontal="10dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -41,10 +39,11 @@
             android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.04"
             android:maxLines="1"
+            android:singleLine="true"
             android:text="SOUND TITLE"
             android:textAllCaps="true"
             android:textColor="@color/text_primary"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -59,13 +58,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_badge_squircle"
-                android:letterSpacing="0.12"
+                android:letterSpacing="0.1"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="1dp"
                 android:text="SFX"
                 android:textAllCaps="true"
-                android:textColor="@color/accent_cyan"
-                android:textSize="9sp"
+                android:textColor="@color/text_primary"
+                android:textSize="8sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -74,9 +73,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:letterSpacing="0.08"
-                android:text="100%"
+                android:text="VOL 100%"
                 android:textColor="@color/text_secondary"
-                android:textSize="9sp"
+                android:textSize="8sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -91,8 +90,8 @@
 
     <ImageButton
         android:id="@+id/btnFavorite"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Favorite"
         android:padding="5dp"
@@ -100,21 +99,22 @@
 
     <ImageButton
         android:id="@+id/btnMoreOptions"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginEnd="4dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="6dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Configure"
+        android:contentDescription="Settings"
         android:padding="5dp"
         android:src="@drawable/ic_settings" />
 
-    <!-- Right Tactile 3D Play / Stop Button -->
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btnPlayToggle"
-        android:layout_width="76dp"
-        android:layout_height="36dp"
+        android:layout_width="74dp"
+        android:layout_height="34dp"
         android:background="@drawable/bg_3d_button"
         android:letterSpacing="0.08"
+        android:minWidth="0dp"
+        android:padding="0dp"
         android:text="▶ PLAY"
         android:textAllCaps="true"
         android:textColor="@color/text_primary"

@@ -5,34 +5,34 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_atmosphere">
 
-    <!-- MAIN CONTENT CONTAINER -->
+    <!-- PAGE 1: MAIN SOUNDBOARD DASHBOARD -->
     <LinearLayout
+        android:id="@+id/pageDashboardRoot"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- TOP HEADER BAR (Settings Icon in Corner + Overlay Toggle + Add Button) -->
+        <!-- FIXED SINGLE-LINE HEADER BAR -->
         <LinearLayout
             android:id="@+id/headerCard"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="54dp"
             android:background="@drawable/bg_glass_card"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="10dp">
+            android:paddingHorizontal="10dp">
 
             <ImageView
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:contentDescription="@string/app_name"
                 android:src="@drawable/ic_nexu_logo" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -40,47 +40,55 @@
                     android:id="@+id/tvAppTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
                     android:fontFamily="sans-serif-black"
                     android:letterSpacing="0.08"
+                    android:maxLines="1"
+                    android:singleLine="true"
                     android:text="AURA BOARD"
                     android:textAllCaps="true"
                     android:textColor="@color/text_primary"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvAppSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.14"
-                    android:text="● SYSTEM ONLINE"
+                    android:ellipsize="end"
+                    android:letterSpacing="0.1"
+                    android:maxLines="1"
+                    android:singleLine="true"
+                    android:text="● ONLINE"
                     android:textAllCaps="true"
                     android:textColor="@color/accent_emerald"
-                    android:textSize="9sp"
+                    android:textSize="8sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnNavImport"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="34dp"
                 android:background="@drawable/bg_3d_button_active"
-                android:letterSpacing="0.08"
-                android:paddingHorizontal="12dp"
+                android:letterSpacing="0.06"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
                 android:text="+ ADD"
                 android:textAllCaps="true"
-                android:textColor="@color/text_primary"
+                android:textColor="#000000"
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnToggleOverlay"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="34dp"
                 android:layout_marginStart="6dp"
                 android:background="@drawable/bg_3d_button"
-                android:letterSpacing="0.08"
-                android:paddingHorizontal="12dp"
+                android:letterSpacing="0.06"
+                android:minWidth="0dp"
+                android:paddingHorizontal="10dp"
                 android:text="OVERLAY"
                 android:textAllCaps="true"
                 android:textColor="@color/text_primary"
@@ -89,38 +97,37 @@
 
             <ImageButton
                 android:id="@+id/btnAudioRoutingGuide"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="5dp"
                 android:background="@drawable/bg_3d_button"
-                android:contentDescription="Audio Routing"
+                android:contentDescription="Mic Mode"
                 android:padding="7dp"
                 android:src="@drawable/ic_mic" />
 
             <ImageButton
                 android:id="@+id/btnCornerSettings"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="6dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="5dp"
                 android:background="@drawable/bg_3d_button"
                 android:contentDescription="Settings"
                 android:padding="7dp"
                 android:src="@drawable/ic_settings" />
         </LinearLayout>
 
-        <!-- TOP METRIC CARDS (Screenshot 1, 5, 6 Style: Small-Caps Labels + Bold Numbers) -->
+        <!-- METRIC CARDS ROW -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:orientation="horizontal">
 
-            <!-- Card 1: Total Sounds -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
-                android:layout_weight="1"
+                android:layout_weight="0.8"
                 android:background="@drawable/bg_glass_card"
                 android:orientation="vertical"
                 android:padding="10dp">
@@ -128,11 +135,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.14"
+                    android:letterSpacing="0.12"
+                    android:singleLine="true"
                     android:text="SOUNDS"
                     android:textAllCaps="true"
                     android:textColor="@color/text_secondary"
-                    android:textSize="9sp"
+                    android:textSize="8sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -143,16 +151,15 @@
                     android:fontFamily="sans-serif-black"
                     android:text="0"
                     android:textColor="@color/text_primary"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Card 2: Auto-Detected Mic / Output Route -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="4dp"
-                android:layout_weight="1.2"
+                android:layout_weight="1.4"
                 android:background="@drawable/bg_glass_card"
                 android:orientation="vertical"
                 android:padding="10dp">
@@ -160,11 +167,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.14"
-                    android:text="MIC / ROUTE"
+                    android:letterSpacing="0.12"
+                    android:singleLine="true"
+                    android:text="MIC TX ENGINE"
                     android:textAllCaps="true"
                     android:textColor="@color/text_secondary"
-                    android:textSize="9sp"
+                    android:textSize="8sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -173,21 +181,21 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:ellipsize="end"
-                    android:letterSpacing="0.08"
+                    android:letterSpacing="0.06"
                     android:maxLines="1"
-                    android:text="AUTO SPEAKER"
+                    android:singleLine="true"
+                    android:text="MIC OVERRIDE + BOOST"
                     android:textAllCaps="true"
-                    android:textColor="@color/accent_cyan"
-                    android:textSize="12sp"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- Card 3: Active Stream Status -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:layout_weight="1"
+                android:layout_weight="0.9"
                 android:background="@drawable/bg_glass_card"
                 android:orientation="vertical"
                 android:padding="10dp">
@@ -195,11 +203,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.14"
-                    android:text="STATUS"
+                    android:letterSpacing="0.12"
+                    android:singleLine="true"
+                    android:text="STATE"
                     android:textAllCaps="true"
                     android:textColor="@color/text_secondary"
-                    android:textSize="9sp"
+                    android:textSize="8sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -207,11 +216,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:letterSpacing="0.08"
+                    android:letterSpacing="0.06"
+                    android:singleLine="true"
                     android:text="IDLE"
                     android:textAllCaps="true"
                     android:textColor="@color/accent_emerald"
-                    android:textSize="12sp"
+                    android:textSize="11sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
@@ -220,13 +230,12 @@
         <LinearLayout
             android:id="@+id/playbackControlBar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="44dp"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_glass_card"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp">
+            android:paddingHorizontal="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -235,26 +244,27 @@
                 android:text="GAIN"
                 android:textAllCaps="true"
                 android:textColor="@color/text_secondary"
-                android:textSize="10sp"
+                android:textSize="9sp"
                 android:textStyle="bold" />
 
             <SeekBar
                 android:id="@+id/seekMasterVolume"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="4dp"
+                android:layout_marginHorizontal="6dp"
                 android:layout_weight="1"
                 android:max="100"
-                android:progress="90" />
+                android:progress="100"
+                android:progressTint="#FFFFFF"
+                android:thumbTint="#FFFFFF" />
 
             <TextView
                 android:id="@+id/tvMasterVolumeValue"
                 android:layout_width="36dp"
                 android:layout_height="wrap_content"
-                android:letterSpacing="0.06"
-                android:text="90%"
+                android:text="100%"
                 android:textColor="@color/text_primary"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:textStyle="bold" />
 
             <ImageButton
@@ -263,22 +273,23 @@
                 android:layout_height="1dp"
                 android:visibility="gone" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnStopAllMain"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="30dp"
                 android:layout_marginStart="6dp"
                 android:background="@drawable/bg_3d_button"
                 android:letterSpacing="0.08"
+                android:minWidth="0dp"
                 android:paddingHorizontal="10dp"
-                android:text="STOP ALL"
+                android:text="■ STOP"
                 android:textAllCaps="true"
                 android:textColor="@color/accent_danger"
-                android:textSize="10sp"
+                android:textSize="9sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- SEARCH & SMALL-CAPS CATEGORY PILLS (Screenshot 5 Style) -->
+        <!-- SEARCH & SMALL-CAPS CATEGORY BAR -->
         <LinearLayout
             android:id="@+id/searchAndFilterCard"
             android:layout_width="match_parent"
@@ -291,13 +302,14 @@
             <EditText
                 android:id="@+id/etSearchSounds"
                 android:layout_width="match_parent"
-                android:layout_height="38dp"
+                android:layout_height="36dp"
                 android:background="@drawable/bg_3d_button"
                 android:hint="SEARCH SOUNDS..."
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:letterSpacing="0.08"
-                android:paddingHorizontal="14dp"
+                android:paddingHorizontal="12dp"
+                android:singleLine="true"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_muted"
                 android:textSize="11sp" />
@@ -314,93 +326,99 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatAll"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_3d_button_active"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="ALL"
                         android:textAllCaps="true"
-                        android:textColor="@color/text_primary"
-                        android:textSize="10sp"
+                        android:textColor="#000000"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatFavorites"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_3d_button"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="★ FAVS"
                         android:textAllCaps="true"
                         android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatRecent"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_3d_button"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="RECENT"
                         android:textAllCaps="true"
                         android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatSfx"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_3d_button"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="SFX"
                         android:textAllCaps="true"
                         android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatVoice"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:layout_marginEnd="6dp"
                         android:background="@drawable/bg_3d_button"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="VOICE"
                         android:textAllCaps="true"
                         android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnCatMusic"
                         android:layout_width="wrap_content"
-                        android:layout_height="32dp"
+                        android:layout_height="30dp"
                         android:background="@drawable/bg_3d_button"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
+                        android:minWidth="0dp"
                         android:paddingHorizontal="12dp"
                         android:text="MUSIC"
                         android:textAllCaps="true"
                         android:textColor="@color/text_secondary"
-                        android:textSize="10sp"
+                        android:textSize="9sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </HorizontalScrollView>
         </LinearLayout>
 
-        <!-- DYNAMIC CONTENT FRAME -->
+        <!-- SERIAL SOUNDBOARD LIST -->
         <FrameLayout
             android:id="@+id/contentFrame"
             android:layout_width="match_parent"
@@ -408,7 +426,6 @@
             android:layout_marginTop="8dp"
             android:layout_weight="1">
 
-            <!-- VIEW 1: SERIAL SOUNDBOARD LIST -->
             <FrameLayout
                 android:id="@+id/viewSoundboardContainer"
                 android:layout_width="match_parent"
@@ -432,8 +449,8 @@
                     android:padding="28dp">
 
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:contentDescription="@null"
                         android:src="@drawable/ic_nexu_logo" />
 
@@ -442,394 +459,499 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:letterSpacing="0.14"
-                        android:text="NO SOUNDS LOADED"
+                        android:text="NO SOUNDS ADDED"
                         android:textAllCaps="true"
                         android:textColor="@color/text_primary"
-                        android:textSize="13sp"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
 
-                    <Button
+                    <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/btnImportFirstSound"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
+                        android:layout_height="38dp"
                         android:layout_marginTop="14dp"
                         android:background="@drawable/bg_3d_button_active"
-                        android:letterSpacing="0.1"
+                        android:letterSpacing="0.08"
                         android:paddingHorizontal="18dp"
                         android:text="+ IMPORT AUDIO"
+                        android:textAllCaps="true"
+                        android:textColor="#000000"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </FrameLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!-- PAGE 2: DEDICATED FULL-SCREEN SETTINGS PAGE WITH SUB-PAGE TABS -->
+    <LinearLayout
+        android:id="@+id/viewSettingsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <!-- SETTINGS PAGE HEADER -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnBackFromSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_3d_button"
+                android:letterSpacing="0.08"
+                android:minWidth="0dp"
+                android:paddingHorizontal="12dp"
+                android:text="← BACK"
+                android:textAllCaps="true"
+                android:textColor="@color/text_primary"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:letterSpacing="0.14"
+                android:text="CONTROL PANEL"
+                android:textAllCaps="true"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- SETTINGS SUB-PAGE TABS (3 SEPARATE PAGES) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_glass_card"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSetTabAudio"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_3d_button_active"
+                android:letterSpacing="0.08"
+                android:text="AUDIO &amp; MIC"
+                android:textAllCaps="true"
+                android:textColor="#000000"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSetTabOverlay"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginHorizontal="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_3d_button"
+                android:letterSpacing="0.08"
+                android:text="OVERLAY"
+                android:textAllCaps="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSetTabSystem"
+                android:layout_width="0dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_3d_button"
+                android:letterSpacing="0.08"
+                android:text="SYSTEM"
+                android:textAllCaps="true"
+                android:textColor="@color/text_secondary"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:layout_weight="1">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- SUB-PAGE 1: AUDIO & MIC OVERRIDE -->
+                <LinearLayout
+                    android:id="@+id/subPageAudio"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_card"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.14"
+                        android:text="VOICE &amp; MIC OVERRIDE ENGINE"
                         android:textAllCaps="true"
                         android:textColor="@color/text_primary"
                         android:textSize="11sp"
                         android:textStyle="bold" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchVoiceCommMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:layout_marginTop="6dp"
+                        android:letterSpacing="0.08"
+                        android:text="MIC OVERRIDE + SPEAKER BOOST"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchAudioFocus"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:letterSpacing="0.08"
+                        android:text="EXCLUSIVE MIC FOCUS ON PLAY"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchOverlapSounds"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:letterSpacing="0.08"
+                        android:text="MULTI-SOUND OVERLAP"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchHapticFeedback"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:letterSpacing="0.08"
+                        android:text="3D TACTILE HAPTICS"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
                 </LinearLayout>
-            </FrameLayout>
 
-            <!-- VIEW 2: SETTINGS PANEL (Opened from Top-Right Settings Icon) -->
-            <ScrollView
-                android:id="@+id/viewSettingsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone">
-
+                <!-- SUB-PAGE 2: FLOATING ROUND ICON & OVERLAY -->
                 <LinearLayout
+                    android:id="@+id/subPageOverlay"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_card"
                     android:orientation="vertical"
-                    android:paddingBottom="16dp">
+                    android:padding="14dp"
+                    android:visibility="gone">
 
-                    <!-- PERMISSIONS -->
-                    <LinearLayout
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.14"
+                        android:text="FLOATING ROUND BUBBLE"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvBubbleSizeLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:letterSpacing="0.08"
+                        android:text="ROUND BUBBLE SIZE: 62 DP"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <SeekBar
+                        android:id="@+id/seekBubbleSize"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_glass_card"
-                        android:orientation="vertical"
-                        android:padding="14dp">
+                        android:layout_marginTop="4dp"
+                        android:max="96"
+                        android:progress="62"
+                        android:progressTint="#FFFFFF"
+                        android:thumbTint="#FFFFFF" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.14"
-                            android:text="SYSTEM PERMISSIONS"
-                            android:textAllCaps="true"
-                            android:textColor="@color/accent_cyan"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tvOverlayOpacityLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:letterSpacing="0.08"
+                        android:text="PANEL OPACITY: 95%"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvPermOverlayStatus"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:letterSpacing="0.08"
-                                android:text="OVERLAY PERMISSION"
-                                android:textAllCaps="true"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <Button
-                                android:id="@+id/btnGrantOverlay"
-                                android:layout_width="wrap_content"
-                                android:layout_height="34dp"
-                                android:background="@drawable/bg_3d_button"
-                                android:letterSpacing="0.08"
-                                android:paddingHorizontal="12dp"
-                                android:text="ALLOW"
-                                android:textAllCaps="true"
-                                android:textColor="@color/accent_cyan"
-                                android:textSize="10sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvPermMicStatus"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:letterSpacing="0.08"
-                                android:text="MIC DETECTION"
-                                android:textAllCaps="true"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <Button
-                                android:id="@+id/btnGrantMic"
-                                android:layout_width="wrap_content"
-                                android:layout_height="34dp"
-                                android:background="@drawable/bg_3d_button"
-                                android:letterSpacing="0.08"
-                                android:paddingHorizontal="12dp"
-                                android:text="ALLOW"
-                                android:textAllCaps="true"
-                                android:textColor="@color/accent_cyan"
-                                android:textSize="10sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/tvPermNotifStatus"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:letterSpacing="0.08"
-                                android:text="BACKGROUND ENGINE"
-                                android:textAllCaps="true"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <Button
-                                android:id="@+id/btnGrantNotif"
-                                android:layout_width="wrap_content"
-                                android:layout_height="34dp"
-                                android:background="@drawable/bg_3d_button"
-                                android:letterSpacing="0.08"
-                                android:paddingHorizontal="12dp"
-                                android:text="ALLOW"
-                                android:textAllCaps="true"
-                                android:textColor="@color/accent_cyan"
-                                android:textSize="10sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- FLOATING BUBBLE & OVERLAY CONFIGURATION -->
-                    <LinearLayout
+                    <SeekBar
+                        android:id="@+id/seekOverlayOpacity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_glass_card"
-                        android:orientation="vertical"
-                        android:padding="14dp">
+                        android:layout_marginTop="4dp"
+                        android:max="100"
+                        android:progress="95"
+                        android:progressTint="#FFFFFF"
+                        android:thumbTint="#FFFFFF" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.14"
-                            android:text="FLOATING ROUND ICON &amp; OVERLAY"
-                            android:textAllCaps="true"
-                            android:textColor="@color/accent_cyan"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tvBubbleSizeLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:letterSpacing="0.08"
-                            android:text="ROUND FLOATING ICON SIZE: 58 DP"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-
-                        <SeekBar
-                            android:id="@+id/seekBubbleSize"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:max="96"
-                            android:progress="58" />
-
-                        <TextView
-                            android:id="@+id/tvOverlayOpacityLabel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:letterSpacing="0.08"
-                            android:text="OVERLAY OPACITY: 92%"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="10sp" />
-
-                        <SeekBar
-                            android:id="@+id/seekOverlayOpacity"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:max="100"
-                            android:progress="92" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchOverlayShowLabels"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="SHOW FULL SOUND TITLES"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btnResetOverlayBounds"
-                            android:layout_width="match_parent"
-                            android:layout_height="38dp"
-                            android:layout_marginTop="6dp"
-                            android:background="@drawable/bg_3d_button"
-                            android:letterSpacing="0.08"
-                            android:text="RESET FLOATING ICON POSITION"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
-
-                    <!-- AUDIO ENGINE & ROUTING -->
-                    <LinearLayout
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchOverlayShowLabels"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:background="@drawable/bg_glass_card"
-                        android:orientation="vertical"
-                        android:padding="14dp">
+                        android:layout_height="46dp"
+                        android:layout_marginTop="6dp"
+                        android:letterSpacing="0.08"
+                        android:text="SHOW FULL SOUND TITLES"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:letterSpacing="0.14"
-                            android:text="AUDIO &amp; VOICE CALL ROUTING"
-                            android:textAllCaps="true"
-                            android:textColor="@color/accent_cyan"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchVoiceCommMode"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="VOICE CALL / MIC CHANNEL ROUTING"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchOverlapSounds"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="MULTI-SOUND OVERLAP"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchAudioFocus"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="TRANSIENT AUDIO FOCUS"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchHapticFeedback"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="3D TACTILE HAPTICS"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchCompactGrid"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="2-COLUMN COMPACT MODE"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchStopOnExit"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="STOP SOUNDS ON EXIT"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchStartOnBoot"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="START ENGINE ON BOOT"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <androidx.appcompat.widget.SwitchCompat
-                            android:id="@+id/switchReducedMotion"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:letterSpacing="0.08"
-                            android:text="REDUCED MOTION"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/tvAboutVersion"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:letterSpacing="0.12"
-                            android:text="VERSION 1.1.0"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_muted"
-                            android:textSize="10sp" />
-
-                        <Button
-                            android:id="@+id/btnOpenGithub"
-                            android:layout_width="match_parent"
-                            android:layout_height="38dp"
-                            android:layout_marginTop="8dp"
-                            android:background="@drawable/bg_3d_button"
-                            android:letterSpacing="0.08"
-                            android:text="GITHUB REPOSITORY"
-                            android:textAllCaps="true"
-                            android:textColor="@color/text_primary"
-                            android:textSize="10sp" />
-                    </LinearLayout>
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnResetOverlayBounds"
+                        android:layout_width="match_parent"
+                        android:layout_height="38dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_3d_button"
+                        android:letterSpacing="0.08"
+                        android:text="RESET BUBBLE POSITION"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </ScrollView>
 
-            <ScrollView
-                android:id="@+id/viewAboutContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="gone" />
-        </FrameLayout>
+                <!-- SUB-PAGE 3: SYSTEM & PERMISSIONS -->
+                <LinearLayout
+                    android:id="@+id/subPageSystem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_card"
+                    android:orientation="vertical"
+                    android:padding="14dp"
+                    android:visibility="gone">
 
-        <!-- Hidden legacy nav buttons to preserve binding compatibility -->
-        <LinearLayout
-            android:id="@+id/bottomNavCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone">
-            <Button android:id="@+id/btnNavSoundboard" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btnNavSettings" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-            <Button android:id="@+id/btnNavAbout" android:layout_width="wrap_content" android:layout_height="wrap_content" />
-        </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:letterSpacing="0.14"
+                        android:text="PERMISSIONS &amp; SYSTEM"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvPermOverlayStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:letterSpacing="0.08"
+                            android:text="OVERLAY"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="10sp" />
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btnGrantOverlay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_3d_button"
+                            android:paddingHorizontal="12dp"
+                            android:text="ALLOW"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvPermMicStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:letterSpacing="0.08"
+                            android:text="MIC ACCESS"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="10sp" />
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btnGrantMic"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_3d_button"
+                            android:paddingHorizontal="12dp"
+                            android:text="ALLOW"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvPermNotifStatus"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:letterSpacing="0.08"
+                            android:text="BACKGROUND"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="10sp" />
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btnGrantNotif"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:background="@drawable/bg_3d_button"
+                            android:paddingHorizontal="12dp"
+                            android:text="ALLOW"
+                            android:textAllCaps="true"
+                            android:textColor="@color/text_primary"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchCompactGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="8dp"
+                        android:letterSpacing="0.08"
+                        android:text="2-COLUMN GRID LAYOUT"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchStopOnExit"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:letterSpacing="0.08"
+                        android:text="STOP SOUNDS ON EXIT"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchStartOnBoot"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:letterSpacing="0.08"
+                        android:text="AUTO-START ON BOOT"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchReducedMotion"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:letterSpacing="0.08"
+                        android:text="REDUCED MOTION"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/tvAboutVersion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:letterSpacing="0.12"
+                        android:text="VERSION 1.2.0"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_muted"
+                        android:textSize="9sp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnOpenGithub"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_3d_button"
+                        android:letterSpacing="0.08"
+                        android:text="GITHUB REPOSITORY"
+                        android:textAllCaps="true"
+                        android:textColor="@color/text_primary"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </FrameLayout>
+        </ScrollView>
     </LinearLayout>
 
-    <!-- FULL-SCREEN NEXUSEC LOADING SCREEN (Screenshot 7 Style) -->
+    <ScrollView
+        android:id="@+id/viewAboutContainer"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/bottomNavCard"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone">
+        <Button android:id="@+id/btnNavSoundboard" android:layout_width="1dp" android:layout_height="1dp" />
+        <Button android:id="@+id/btnNavSettings" android:layout_width="1dp" android:layout_height="1dp" />
+        <Button android:id="@+id/btnNavAbout" android:layout_width="1dp" android:layout_height="1dp" />
+    </LinearLayout>
+
+    <!-- UPGRADED LARGER NEXUSEC LOADING SCREEN -->
     <FrameLayout
         android:id="@+id/loadingOverlayContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#050507"
+        android:background="#000000"
         android:clickable="true"
         android:focusable="true">
 
-        <!-- Giant Subtle Background Watermark -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.06"
-            android:text="AuraBoard"
-            android:textColor="#0BFFFFFF"
-            android:textSize="58sp"
+            android:letterSpacing="0.08"
+            android:text="AURA"
+            android:textColor="#0DFFFFFF"
+            android:textSize="92sp"
             android:textStyle="bold" />
 
         <LinearLayout
@@ -840,31 +962,33 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="58dp"
-                android:layout_height="58dp"
+                android:id="@+id/ivLoadingLogo"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_nexu_logo" />
 
             <ProgressBar
                 android:id="@+id/loadingProgressBar"
                 style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="110dp"
-                android:layout_height="3dp"
-                android:layout_marginTop="18dp"
+                android:layout_width="175dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="24dp"
                 android:indeterminate="false"
                 android:max="100"
-                android:progress="65"
+                android:progress="20"
+                android:progressBackgroundTint="#26FFFFFF"
                 android:progressTint="#FFFFFF" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:letterSpacing="0.22"
-                android:text="LOADING SOUNDBOARD DASHBOARD"
+                android:layout_marginTop="14dp"
+                android:letterSpacing="0.24"
+                android:text="LOADING SOUNDBOARD ENGINE"
                 android:textAllCaps="true"
-                android:textColor="#788092"
-                android:textSize="9sp"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </FrameLayout>
