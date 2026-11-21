@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Aura Soundboard</string>
+    <string name="app_tagline">Ultra-Light Glass Soundboard &amp; Overlay</string>
+    <string name="search_hint">Search sounds or categories…</string>
+    <string name="stop_all">Stop All</string>
+    <string name="import_sound">Import Audio</string>
+    <string name="overlay_toggle">Overlay</string>
+    <string name="empty_library_title">Your Soundboard is Empty</string>
+    <string name="empty_library_desc">Import MP3, WAV, OGG, M4A, or FLAC audio files from your device storage. Files play with ultra-low latency and minimal RAM usage.</string>
+    <string name="notif_channel_name">Soundboard Background Engine</string>
+    <string name="notif_channel_desc">Keeps the floating soundboard overlay and audio engine responsive over other apps.</string>
+</resources>

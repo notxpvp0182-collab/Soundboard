@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep Obsidian Base Palette -->
+    <color name="bg_obsidian_deep">#06080D</color>
+    <color name="bg_obsidian_surface">#0C1018</color>
+    <color name="bg_dialog_solid">#101622</color>
+
+    <!-- Translucent Glass Surfaces -->
+    <color name="glass_panel_fill">#16FFFFFF</color>
+    <color name="glass_panel_elevated">#22FFFFFF</color>
+    <color name="glass_panel_active">#2400E5FF</color>
+    <color name="glass_overlay_bg">#E60A0E17</color>
+
+    <!-- Specular Hairline Borders -->
+    <color name="glass_border_subtle">#24FFFFFF</color>
+    <color name="glass_border_highlight">#38FFFFFF</color>
+    <color name="glass_border_cyan">#7700E5FF</color>
+
+    <!-- Accent Palette (Aqua/Cyan, Indigo/Purple, Emerald) -->
+    <color name="accent_cyan">#00E5FF</color>
+    <color name="accent_cyan_dim">#3300E5FF</color>
+    <color name="accent_indigo">#6366F1</color>
+    <color name="accent_emerald">#10B981</color>
+    <color name="accent_danger">#EF4444</color>
+    <color name="accent_warning">#F59E0B</color>
+
+    <!-- Typography -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+</resources>
